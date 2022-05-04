@@ -1,0 +1,24 @@
+3/27/09
+Client.tcl
+	fixed server(buffer) not set
+SpecTkAppInit.c
+	fixed memset on doubles!
+Display2D.tcl
+	changed call to SetDisplay
+Palette.tcl
+	added hiding of scale display ticks when width too small
+	added log display of z scale
+Main.tcl
+	changed version to 1.2
+Page.tcl
+	remove unset Display($id) in Page::Modify
+
+4/16/09
+Palette.tcl
+	added line to prevent divide by zero in z log scale
+Main.tcl
+	added automatic enabling of update button after 1s wait (in case script crashed)
+
+5/10/09
+Client.tcl
+	fixed bug introduced by 3/27/09 fix: server(buffer) is now unset after each client-server exchange so that it doesn’t accumulate responses

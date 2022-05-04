@@ -1,0 +1,1 @@
+{Server: u6pc2.nscl.msu.edu - Port: 9001} {Server: uxpc2.nscl.msu.edu - Port: 9003} {Server: uxpc2.nscl.msu.edu - Port: 9001} {Server: localhost - Port: 9001} {Server: dill.nscl.msu.edu - Port: 9003} {Server: u3pc2.nscl.msu.edu - Port: 9001} {Server: devop1 - Port: 9003} {Server: 35.9.57.96 - Port: 9001} {Server: 127.0.0.1 - Port: 9003} {Server: ctlrm-daq2 - Port: 9001}

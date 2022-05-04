@@ -1,0 +1,302 @@
+# SpecTk configuration written on Wed Dec 16 12:00:36 JST 2009
+set spectk(pages) ".top.pages"
+set spectk(menubar) ".menubar"
+set spectk(vvalue) ""
+set spectk(recentservers) "{Server: spdaq23.nscl.msu.edu - Port: 9001} {Server: u4pc2.nscl.msu.edu - Port: 9001} {Server: u6pc2.nscl.msu.edu - Port: 9003} {Server: u6pc2.nscl.msu.edu - Port: 9001} {Server: uxpc2.nscl.msu.edu - Port: 9003} {Server: uxpc2.nscl.msu.edu - Port: 9001} {Server: localhost - Port: 9001} {Server: dill.nscl.msu.edu - Port: 9003} {Server: u3pc2.nscl.msu.edu - Port: 9001} {Server: devop1 - Port: 9003}"
+set spectk(helptoggle) "0"
+set spectk(buttonheight) "50"
+set spectk(pageRows) "2"
+set spectk(fitfunction) "Gaussian"
+set spectk(expandauto) "1"
+set spectk(fitguess) "1"
+set spectk(errorbars) "0"
+set spectk(ButtonPressed) "0"
+set spectk(roiname) "roi1"
+set spectk(expanddisplay) "dali.eraws (True)"
+set spectk(pageName) "page2"
+set spectk(configName) "/Applications/SpecTk/1.3/unknown.spk"
+set spectk(fitpoints) "200"
+set spectk(roicoord) ""
+set spectk(currentTool) "BindZoom"
+set spectk(coeff0) ""
+set spectk(coeff1) ""
+set spectk(roitype) "roi"
+set spectk(spectrumName) "dali.tref2"
+set spectk(info) ".top.info"
+set spectk(fitgraph) ".top.pages.page2.displayR1C0.graph"
+set spectk(coeff2) ""
+set spectk(xvalue) ""
+set spectk(drawer) ".drawer"
+set spectk(drawerwidth) "250"
+set spectk(coeff3) ""
+set spectk(vunit) ""
+set spectk(coeff4) ""
+set spectk(legend) "1"
+set spectk(xunit) ""
+set spectk(fitdisplay) "1"
+set spectk(help) ".top.help"
+set spectk(fitquiet) "0"
+set spectk(spectrumX) "dali.raw.tref2"
+set spectk(toplevel) ".top"
+set spectk(expandxmin) ""
+set spectk(ygrid1d) "0"
+set spectk(spectrumY) ""
+set spectk(status) ".top.status"
+set spectk(spectrumType) "1D"
+set spectk(expandxmax) ""
+set spectk(helpmessage) ""
+set spectk(hold0) "0"
+set spectk(spectruminfo) ""
+set spectk(hold1) "0"
+set spectk(expandunitx) ""
+set spectk(hold2) "0"
+set spectk(expandunity) ""
+set spectk(symbolsize) "4"
+set spectk(hold3) "0"
+set spectk(hold4) "0"
+set spectk(geometry) "1061x704+231+10"
+set spectk(roispan) "parameter"
+set spectk(expandmin) ""
+set spectk(spectrumGate) "True"
+set spectk(fitmaxiter) "100"
+set spectk(ygrid2d) "0"
+set spectk(savedir) "/Applications/SpecTk/1.3/"
+set spectk(fitwave) "::Wave1D::dali.eraw014"
+set spectk(expandmax) ""
+set spectk(trace) "::Wave1D::dali.eraw014"
+set spectk(expandunit) ""
+set spectk(ncoeff) "5"
+set spectk(roiobject) "::ROI::roi1"
+set spectk(linestyle) "step"
+set spectk(pageGeometry) "2 rows by 3 columns"
+set spectk(tools) ".top.tools"
+set spectk(xgrid1d) "0"
+set spectk(spectrum) "dali.tref2"
+set spectk(autoPeriod) "2"
+set spectk(autoUpdate) "0"
+set spectk(fitepsilon) "1e-5"
+set spectk(selectMode) "single"
+set spectk(disablemouse) "0"
+set spectk(toolwidth) "32"
+set spectk(spectrumList) "dali.eraw014 dali.eraws dali.traws dali.tref1 dali.tref2"
+set spectk(symboltype) "none"
+set spectk(xgrid2d) "0"
+set spectk(recentfiles) "/home/exp/spectcl/bigrips/f1f3profile.spk /home/exp/exp/nov09ivsm/f2f3ppac_raw.spk /home/exp/exp/nov09ivsm/ppac_calib.spk /home/exp/exp/nov09ivsm/ProfileF1-5.spk /home/exp/spectcl/bigrips/spectra_spk/ProfileF1-F8.spk /Users/lab/Documents/Devices/BigRIPS/SpecTcl/spectra_spk/PID_BigRIPS-F8F11prof_test.spk"
+set spectk(treepath) "dali tref2"
+set spectk(expandymin) ""
+set spectk(infoheight) "20"
+set spectk(expandymax) ""
+set spectk(draweropen) "1"
+set spectk(buttons) ".top.buttons"
+set spectk(pageInfo) "2 rows by 3 columns"
+set spectk(yunit) ""
+set spectk(pageColumns) "3"
+set spectk(yvalue) ""
+##### Begin Page page1 definition #####
+Page page1 .top.pages 2 2
+page1 SetMember selected "R0C0"
+page1 SetMember current R0C0
+page1 SetMember currentBinding "BindSelect"
+page1 SetMember oneDisplay ""
+page1 SetMember display(R0C0) .top.pages.page1.displayR0C0
+page1 SetMember display(R1C0) .top.pages.page1.displayR1C0
+page1 SetMember display(R0C1) .top.pages.page1.displayR0C1
+page1 SetMember display(R1C1) .top.pages.page1.displayR1C1
+.top.pages tab configure [page1 GetMember index] -text page1
+##### End Page page1 definition #####
+##### Begin Page page2 definition #####
+Page page2 .top.pages 2 3
+page2 SetMember selected "R0C0"
+page2 SetMember current R0C0
+page2 SetMember currentBinding "BindSelect"
+page2 SetMember oneDisplay ""
+page2 SetMember display(R1C2) .top.pages.page2.displayR1C2
+page2 SetMember display(R0C0) .top.pages.page2.displayR0C0
+page2 SetMember display(R1C0) .top.pages.page2.displayR1C0
+page2 SetMember display(R0C1) .top.pages.page2.displayR0C1
+page2 SetMember display(R1C1) .top.pages.page2.displayR1C1
+page2 SetMember display(R0C2) .top.pages.page2.displayR0C2
+page2 SetMember Display(R1C2) ::page2R1C2
+page2 SetMember Display(R0C0) ::page2R0C0
+page2 SetMember Display(R0C1) ::page2R0C1
+page2 SetMember Display(R1C0) ::page2R1C0
+page2 SetMember Display(R0C2) ::page2R0C2
+.top.pages tab configure [page2 GetMember index] -text page2
+##### End Page page2 definition #####
+##### Begin Display1D page2R0C2 definition #####
+Display1D page2R0C2 .top.pages.page2.displayR0C2
+page2R0C2 SetMember waves "::Wave1D::dali.tref1"
+page2R0C2 SetMember unit "unknown"
+page2R0C2 SetMember vunit "Counts"
+page2R0C2 SetMember autoscale 1
+page2R0C2 SetMember log 0
+page2R0C2 SetMember min "0.0"
+page2R0C2 SetMember max "1138127.1"
+page2R0C2 SetMember xmin "31472.0812183"
+page2R0C2 SetMember xmax "39593.9086294"
+page2R0C2 SetMember center 35532.9949238
+page2R0C2 SetMember roiwave 0
+page2R0C2 SetMember symbol "none"
+page2R0C2 SetMember errorbar "0"
+page2R0C2 SetMember smooth "step"
+page2R0C2 SetMember pixels "4"
+page2R0C2 SetMember linewidth "1"
+page2R0C2 SetMember legend "1"
+page2R0C2 SetMember xgrid "0"
+page2R0C2 SetMember ygrid "0"
+page2R0C2 SetMember message "Spectrum dali.tref1
+not found!"
+##### End Display1D page2R0C2 definition #####
+##### Begin Display1D page2R1C0 definition #####
+Display1D page2R1C0 .top.pages.page2.displayR1C0
+page2R1C0 SetMember waves "::Wave1D::dali.eraw014"
+page2R1C0 SetMember unit "unknown"
+page2R1C0 SetMember vunit "Counts"
+page2R1C0 SetMember autoscale 1
+page2R1C0 SetMember log 0
+page2R1C0 SetMember min "0.0"
+page2R1C0 SetMember max "1688.5"
+page2R1C0 SetMember xmin "214.551224248"
+page2R1C0 SetMember xmax "808.409748822"
+page2R1C0 SetMember center 511.480486533
+page2R1C0 SetMember roiwave 0
+page2R1C0 SetMember symbol "none"
+page2R1C0 SetMember errorbar "0"
+page2R1C0 SetMember smooth "step"
+page2R1C0 SetMember pixels "4"
+page2R1C0 SetMember linewidth "1"
+page2R1C0 SetMember legend "1"
+page2R1C0 SetMember xgrid "0"
+page2R1C0 SetMember ygrid "0"
+page2R1C0 SetMember message "Spectrum dali.eraw014
+not found!"
+##### End Display1D page2R1C0 definition #####
+##### Begin Display1D page2R1C2 definition #####
+Display1D page2R1C2 .top.pages.page2.displayR1C2
+page2R1C2 SetMember waves "::Wave1D::dali.tref2"
+page2R1C2 SetMember unit "unknown"
+page2R1C2 SetMember vunit "Counts"
+page2R1C2 SetMember autoscale 1
+page2R1C2 SetMember log 0
+page2R1C2 SetMember min "0.0"
+page2R1C2 SetMember max "421524.4"
+page2R1C2 SetMember xmin "33474.1941302"
+page2R1C2 SetMember xmax "38174.1348656"
+page2R1C2 SetMember center 35824.1644979
+page2R1C2 SetMember roiwave 0
+page2R1C2 SetMember symbol "none"
+page2R1C2 SetMember errorbar "0"
+page2R1C2 SetMember smooth "step"
+page2R1C2 SetMember pixels "4"
+page2R1C2 SetMember linewidth "1"
+page2R1C2 SetMember legend "1"
+page2R1C2 SetMember xgrid "0"
+page2R1C2 SetMember ygrid "0"
+page2R1C2 SetMember message "Spectrum dali.tref2
+not found!"
+##### End Display1D page2R1C2 definition #####
+##### Begin Display2D page2R0C0 definition #####
+Display2D page2R0C0 .top.pages.page2.displayR0C0
+page2R0C0 SetMember waves "::Wave2D::dali.eraws"
+page2R0C0 SetMember unit "index unknown"
+page2R0C0 SetMember vunit "Counts"
+page2R0C0 SetMember autoscale 1
+page2R0C0 SetMember log 1
+page2R0C0 SetMember min "1"
+page2R0C0 SetMember max "2394733.0"
+page2R0C0 SetMember xmin "001"
+page2R0C0 SetMember xmax "183"
+page2R0C0 SetMember ymin "0.000000"
+page2R0C0 SetMember ymax "4096.000000"
+page2R0C0 SetMember center "69.0 1165.312"
+page2R0C0 SetMember roiwave 0
+page2R0C0 SetMember xgrid 0
+page2R0C0 SetMember ygrid 0
+page2R0C0 SetMember message "Spectrum dali.eraws
+not found!"
+##### End Display2D page2R0C0 definition #####
+##### Begin Display2D page2R0C1 definition #####
+Display2D page2R0C1 .top.pages.page2.displayR0C1
+page2R0C1 SetMember waves "::Wave2D::dali.traws"
+page2R0C1 SetMember unit "index unknown"
+page2R0C1 SetMember vunit "Counts"
+page2R0C1 SetMember autoscale 1
+page2R0C1 SetMember log 1
+page2R0C1 SetMember min "1"
+page2R0C1 SetMember max "13129.3343109"
+page2R0C1 SetMember xmin "1.0"
+page2R0C1 SetMember xmax "181.0"
+page2R0C1 SetMember ymin "32700.0"
+page2R0C1 SetMember ymax "35400.0"
+page2R0C1 SetMember center "91.0 34050.0"
+page2R0C1 SetMember roiwave 0
+page2R0C1 SetMember xgrid 0
+page2R0C1 SetMember ygrid 0
+page2R0C1 SetMember message "Spectrum dali.traws
+not found!"
+##### End Display2D page2R0C1 definition #####
+##### Begin Wave1D ::Wave1D::dali.tref1 definition #####
+Wave1D ::Wave1D::dali.tref1 dali.tref1
+::Wave1D::dali.tref1 SetMember bins "1000"
+::Wave1D::dali.tref1 SetMember low "0.000000"
+::Wave1D::dali.tref1 SetMember high "100000.000000"
+::Wave1D::dali.tref1 SetMember increment "100.0"
+::Wave1D::dali.tref1 SetMember unit "unknown"
+::Wave1D::dali.tref1 SetMember vunit "Counts"
+::Wave1D::dali.tref1 SetMember parameter "dali.raw.tref1"
+::Wave1D::dali.tref1 SetMember spectrum "dali.tref1"
+::Wave1D::dali.tref1 SetMember type "1"
+::Wave1D::dali.tref1 SetMember gate "True"
+##### End Wave1D ::Wave1D::dali.tref1 definition #####
+##### Begin Wave1D ::Wave1D::dali.tref2 definition #####
+Wave1D ::Wave1D::dali.tref2 dali.tref2
+::Wave1D::dali.tref2 SetMember bins "1000"
+::Wave1D::dali.tref2 SetMember low "0 "
+::Wave1D::dali.tref2 SetMember high "100000 "
+::Wave1D::dali.tref2 SetMember increment "100.0"
+::Wave1D::dali.tref2 SetMember unit "unknown"
+::Wave1D::dali.tref2 SetMember vunit "Counts"
+::Wave1D::dali.tref2 SetMember parameter "dali.raw.tref2"
+::Wave1D::dali.tref2 SetMember spectrum "dali.tref2"
+::Wave1D::dali.tref2 SetMember type "1"
+::Wave1D::dali.tref2 SetMember gate "True"
+##### End Wave1D ::Wave1D::dali.tref2 definition #####
+##### Begin Wave1D ::Wave1D::dali.eraw014 definition #####
+Wave1D ::Wave1D::dali.eraw014 dali.eraw014
+::Wave1D::dali.eraw014 SetMember bins "1000"
+::Wave1D::dali.eraw014 SetMember low "0.000000"
+::Wave1D::dali.eraw014 SetMember high "4096.000000"
+::Wave1D::dali.eraw014 SetMember increment "4.096"
+::Wave1D::dali.eraw014 SetMember unit "unknown"
+::Wave1D::dali.eraw014 SetMember vunit "Counts"
+::Wave1D::dali.eraw014 SetMember parameter "dali.raw.e.014"
+::Wave1D::dali.eraw014 SetMember spectrum "dali.eraw014"
+::Wave1D::dali.eraw014 SetMember type "1"
+::Wave1D::dali.eraw014 SetMember gate "True"
+##### End Wave1D ::Wave1D::dali.eraw014 definition #####
+##### Begin Wave2D ::Wave2D::dali.traws definition #####
+Wave2D ::Wave2D::dali.traws dali.traws
+::Wave2D::dali.traws SetMember bins "182 1000"
+::Wave2D::dali.traws SetMember low "001 0.000000"
+::Wave2D::dali.traws SetMember high "183 100000.000000"
+::Wave2D::dali.traws SetMember increment "1.0 100.0"
+::Wave2D::dali.traws SetMember unit "index unknown"
+::Wave2D::dali.traws SetMember vunit "Counts"
+::Wave2D::dali.traws SetMember parameter "xx dali.raw.t.xx"
+::Wave2D::dali.traws SetMember spectrum "dali.traws"
+::Wave2D::dali.traws SetMember type "s"
+::Wave2D::dali.traws SetMember gate "True"
+##### End Wave2D ::Wave2D::dali.traws definition #####
+##### Begin Wave2D ::Wave2D::dali.eraws definition #####
+Wave2D ::Wave2D::dali.eraws dali.eraws
+::Wave2D::dali.eraws SetMember bins "182 1000"
+::Wave2D::dali.eraws SetMember low "001 0.000000"
+::Wave2D::dali.eraws SetMember high "183 4096.000000"
+::Wave2D::dali.eraws SetMember increment "1.0 4.096"
+::Wave2D::dali.eraws SetMember unit "index unknown"
+::Wave2D::dali.eraws SetMember vunit "Counts"
+::Wave2D::dali.eraws SetMember parameter "xx dali.raw.e.xx"
+::Wave2D::dali.eraws SetMember spectrum "dali.eraws"
+::Wave2D::dali.eraws SetMember type "s"
+::Wave2D::dali.eraws SetMember gate "True"
+##### End Wave2D ::Wave2D::dali.eraws definition #####
