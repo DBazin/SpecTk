@@ -214,12 +214,14 @@ proc TreeSpectrum {parent} {
 				continue
 			} else {
 # flag the entry so that it is not duplicated and its icon is updated
-				set id [$t find -name $path]
+#				set id [$t find -name $path]
+				set id [$t index -path -quiet $path]
 				set flag 1
 			}
 		}
 		if {![string equal [$t find -name $path] ""]} {
-			set id [$t find -name $path]
+#			set id [$t find -name $path]
+			set id [$t index -path -quiet $path]
 			set flag 1
 		}
 # store or update data
@@ -235,7 +237,8 @@ proc TreeSpectrum {parent} {
 			if {[llength $path] == 1} {set pid ""}
 # try to find the closest parent
 			for {set i [expr [llength $path]-2]} {$i >= 0} {incr i -1} {
-				set pid [$t find -name [lrange $path 0 $i]]
+#				set pid [$t find -name [lrange $path 0 $i]]
+				set pid [$t index -path -quiet [lrange $path 0 $i]]
 				if {![string equal $pid ""]} {break}
 			}
 # if we didn't find it then it is root
@@ -258,7 +261,7 @@ proc TreeSpectrum {parent} {
 			set pos [lsearch $cnames [lindex $path $i]]
 # somehow the positioning only works when inserting singlet nodes (another bug in BLT)
 #			set id [$t insert -at $pid $pos [lindex $path $i]]
-			catch {set id [$t insert $pos [lindex $path $i] -at $pid]}
+			set id [$t insert $pos [lindex $path $i] -at $pid]
 # this makes sure the final node gets created if it is a multiplet
 			if {$i < [expr [llength $path]-1]} {set id [$t insert end $path]}
 		}
@@ -268,7 +271,6 @@ proc TreeSpectrum {parent} {
 		$t bind $id <Button-1> SelectSpectrumInfo
 		$t bind $id <Double-Button-1> DoAssignButton
 	}
-
 # now we need to remove eventual deleted spectra from the tree
 	foreach s $spectk(spectrumList) {
 		if {[lsearch $currentList $s] == -1} {
@@ -284,7 +286,9 @@ proc TreeSpectrum {parent} {
 			}
 			for {set i [expr [llength $path]-1]} {$i >= 0} {incr i -1} {
 				set node [lrange $path 0 $i]
-				set nid [$t find $node]
+#				set nid [$t find -name $node]
+				set nid [$t index -path -quiet $node]
+				if {[llength $nid] == 0} {continue}
 				set Name [join $node ,]
 				if {[llength [$t entry children $nid]] == 0} {
 					$t delete $nid
@@ -321,7 +325,8 @@ proc MouseClearSpectrumInfo {t} {
 	if {$spectk(disablemouse)} {return}
 	ClearSpectrumInfo $t
 	set path [$t get -full focus]
-	set id [$t find -name $path]
+#	set id [$t find -name $path]
+	set id [$t index -path -quiet $path]
 # if this is only a node without spectrum, return
 	if {[llength [$t bind $id]] == 1} {return}
 	SetSpectrumInfo $t $id
@@ -377,7 +382,8 @@ proc KeyPressedTree {t key} {
 	if {[string equal $key Down] || [string equal $key Up]} {
 		if {[string equal $key Down]} {set path [$t get -full down]}
 		if {[string equal $key Up]} {set path [$t get -full up]}
-		set id [$t find -name $path]
+#		set id [$t find -name $path]
+		set id [$t index -path -quiet $path]
 # if this is only a node without spectrum, clear and return
 		if {[llength [$t bind $id]] == 1} {
 			ClearSpectrumInfo $t
