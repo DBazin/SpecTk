@@ -369,7 +369,7 @@ itcl::body Display1D::ZoomLeftClick {xscreen yscreen mode} {
 	set xmax [lindex [$graph axis limits x] 1]
 	set ymin [lindex [$graph axis limits y] 0]
 	set ymax [lindex [$graph axis limits y] 1]
-# this selects the display instead of performing the bindingﾕs action
+# this selects the display instead of performing the bindingﾃ不 action
 	if {$x < $xmin || $x > $xmax || $y < $ymin || $y > $ymax} {
 		$page SelectDisplay $id $mode
 		return
@@ -502,7 +502,7 @@ itcl::body Display1D::ExpandLeftClick {xscreen yscreen mode} {
 	set xmax [lindex [$graph axis limits x] 1]
 	set ymin [lindex [$graph axis limits y] 0]
 	set ymax [lindex [$graph axis limits y] 1]
-# this selects the display instead of performing the bindingﾕs action
+# this selects the display instead of performing the bindingﾃ不 action
 	if {$x < $xmin || $x > $xmax || $y < $ymin || $y > $ymax} {
 		$page SelectDisplay $id $mode
 		return
@@ -689,7 +689,7 @@ itcl::body Display1D::ButtonPress {xscreen yscreen mode} {
 	set xmax [lindex [$graph axis limits x] 1]
 	set ymin [lindex [$graph axis limits y] 0]
 	set ymax [lindex [$graph axis limits y] 1]
-# this selects the display instead of performing the bindingﾕs action
+# this selects the display instead of performing the bindingﾃ不 action
 	if {$x < $xmin || $x > $xmax || $y < $ymin || $y > $ymax} {
 		$page SelectDisplay $id $mode
 		return
@@ -723,7 +723,7 @@ itcl::body Display1D::InspectLeftClick {xscreen yscreen mode} {
 	set xmax [lindex [$graph axis limits x] 1]
 	set ymin [lindex [$graph axis limits y] 0]
 	set ymax [lindex [$graph axis limits y] 1]
-# this selects the display instead of performing the bindingﾕs action
+# this selects the display instead of performing the bindingﾃ不 action
 	if {$x < $xmin || $x > $xmax || $y < $ymin || $y > $ymax} {
 		$page SelectDisplay $id $mode
 		return
@@ -777,7 +777,7 @@ itcl::body Display1D::EditClick {xscreen yscreen mode} {
 	set xmax [lindex [$graph axis limits x] 1]
 	set ymin [lindex [$graph axis limits y] 0]
 	set ymax [lindex [$graph axis limits y] 1]
-# this selects the display instead of performing the bindingﾕs action
+# this selects the display instead of performing the bindingﾃ不 action
 	if {$x < $xmin || $x > $xmax || $y < $ymin || $y > $ymax} {
 		$page SelectDisplay $id $mode
 		return
@@ -944,7 +944,7 @@ itcl::body Display1D::UpdateROIResults {wave} {
 	global spectk
 	if {[$graph marker exist roidisplay]} {$graph marker delete roidisplay}
 	set str [format "			%s" [$wave GetMember name]]
-	append str [format "\n%-8s%-8s%-8s%-8s%-8s" ROI Sum Ratio <X> RMS]
+	append str [format "\n%-8s%-8s%-8s%-8s%-8s" ROI Sum Ratio <X> FWHM]
 	set r [$wave GetMember calc(All)]
 	append str [format "\n%-8s%- 8.7g%- 8.5g%- 8.5g%- 8.5g" \
 	All [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3]]
