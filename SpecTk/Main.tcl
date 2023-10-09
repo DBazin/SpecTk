@@ -41,7 +41,7 @@ source $SpecTkHome/GraphDialog.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.3"
+	set spectk(version) "1.3.2"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .

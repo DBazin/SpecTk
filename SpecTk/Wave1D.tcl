@@ -13,6 +13,9 @@ itcl::class Wave1D {
 	private variable datatype
 	private variable gate
 	private variable calc
+	private variable offset false
+	private variable offVal .0000000001
+
 	
 	constructor {theName} {
 		set name $theName
@@ -62,6 +65,7 @@ itcl::class Wave1D {
 	public method Clear {}
 	public method Write {file}
 	public method Read {}
+	public method toggleOffset {check}
 }
 
 itcl::body Wave1D::Assign {s} {
@@ -270,8 +274,30 @@ itcl::body Wave1D::CalculateROI {roi} {
 	blt::vector destroy x y
 }
 
-itcl::body Wave1D::Clear {} {
-	if {![string equal $spectrum ""]} {clear $spectrum}
+itcl::body Wave1D::toggleOffset {check} {
+    if {$offset == 1} {
+        if {!$check} {
+            for {set i 0} {$i < [$this.data length]} {incr i} {
+                set currentY [$this.data index $i]
+                if {$currentY == $offVal} {
+                    set newY [expr {$currentY - $offVal}]
+                    $this.data index $i $newY
+                }
+            }
+            set offset 0
+        }
+    } else {
+        if {$check} {
+            for {set i 0} {$i < [$this.data length]} {incr i} {
+                set currentY [$this.data index $i]
+                if {$currentY == 0} {
+                    set newY [expr {$currentY + $offVal}]
+                    $this.data index $i $newY
+                }
+            }
+            set offset 1
+        }
+    }
 }
 
 itcl::body Wave1D::Write {file} {

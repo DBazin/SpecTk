@@ -520,7 +520,7 @@ itcl::body Display1D::ExpandPlus {} {
 	if {![winfo exist $graph]} {return}
 	set max [expr [lindex [$graph axis limits y] 1] *2]
 	if {$log} {
-		$graph axis configure y -min 1.0 -max $max
+		$graph axis configure y -min .5 -max $max
 	} else {
 		$graph axis configure y -min $min -max $max
 	}
@@ -531,7 +531,7 @@ itcl::body Display1D::ExpandMinus {} {
 	if {![winfo exist $graph]} {return}
 	set max [expr [lindex [$graph axis limits y] 1] /2]
 	if {$log} {
-		if {$max > 1.0} {$graph axis configure y -min 1.0 -max $max}
+		if {$max > 1.0} {$graph axis configure y -min .5 -max $max}
 	} else {
 		if {$max > $min} {$graph axis configure y -min $min -max $max}
 	}
@@ -581,7 +581,7 @@ itcl::body Display1D::ExpandAuto {} {
 			if {$wmax*1.1 > $max} {set max [expr $wmax*1.1]}
 		}
 	}
-	if {$log} {set min 1.0}
+	if {$log} {set min .5}
 	if {!$log && $min > 0.0} {set min 0.0}
 	if {$max > $min} {$graph axis configure y -min $min -max $max}
 	set autoscale 1
@@ -589,16 +589,30 @@ itcl::body Display1D::ExpandAuto {} {
 }
 
 itcl::body Display1D::SetLog {} {
-	if {![winfo exist $graph]} {return}
-	set log 1
-	if {$min <= 0} {set min 0.5}
-	if {$max > $min} {$graph axis configure y -min $min}
-	catch "$graph axis configure y -log 1"
+    if {![winfo exist $graph]} {return}
+    set log 1
+
+    if {$log} {
+        foreach w $waves {
+            if {[lsearch [itcl::find object -isa Wave1D] $w] != -1} {
+                $w toggleOffset true
+            }
+        }
+    }
+
+    if {$min <= 0} {set min 0.5}
+    if {$max > $min} {$graph axis configure y -min $min}
+    catch "$graph axis configure y -log 1"
 }
 
 itcl::body Display1D::SetLin {} {
 	if {![winfo exist $graph]} {return}
 	set log 0
+        foreach w $waves {
+        if {[lsearch [itcl::find object -isa Wave1D] $w] != -1} {
+            $w toggleOffset false ;
+        }
+    	}
 	$graph axis configure y -log 0
 	if {$autoscale} {
 		ExpandAuto
@@ -944,7 +958,7 @@ itcl::body Display1D::UpdateROIResults {wave} {
 	global spectk
 	if {[$graph marker exist roidisplay]} {$graph marker delete roidisplay}
 	set str [format "			%s" [$wave GetMember name]]
-	append str [format "\n%-8s%-8s%-8s%-8s%-8s" ROI Sum Ratio <X> RMS]
+	append str [format "\n%-8s%-8s%-8s%-8s%-8s" ROI Sum Ratio <X> FWHM]
 	set r [$wave GetMember calc(All)]
 	append str [format "\n%-8s%- 8.7g%- 8.5g%- 8.5g%- 8.5g" \
 	All [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3]]

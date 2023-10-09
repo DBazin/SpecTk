@@ -294,7 +294,7 @@ proc EnterHelp {w} {
 proc DisplayAbout {} {
 	toplevel .about
 	wm title .about "About SpecTk"
-	text .about.text -background white -width 40 -height 14
+	text .about.text -background white -width 40 -height 16
 	pack .about.text -expand 1 -fill both
 	button .about.dismiss -text Dismiss -command "destroy .about"
 	pack .about.dismiss
@@ -302,15 +302,17 @@ proc DisplayAbout {} {
 	.about.text tag configure normal -font "Helvetica -12" -justify center
 	.about.text tag configure green -foreground darkgreen
 	.about.text insert end "SpecTk\n" "big green"
-	.about.text insert end "version 1.3\n\n" "normal green"
+	.about.text insert end "version 1.3.2\n\n" "normal green"
 	.about.text insert end "A displayer for SpecTcl\n" "normal"
 	.about.text insert end "© NSCL/MSU 2004\n" "normal"
 	.about.text insert end "Written after hours by D. Bazin\n" "normal"
 	.about.text insert end "on a PowerBook G4 running Mac OS X\n" "normal"
 	.about.text insert end "with the help of two great Tcl/Tk packages:\n" "normal"
 	.about.text insert end "BLT 2.4z and Itcl 3.2\n" "normal"
-	.about.text insert end "Inspired by Xamine, Igor Pro and Mac OS X\n" "normal"
+	.about.text insert end "Inspired by Xamine, Igor Pro and Mac OS X\n\n" "normal"
 	.about.text insert end "Please send comments and suggestions to:\n" "normal"
-	.about.text insert end "bazin@nscl.msu.edu\n" "normal"
+	.about.text insert end "bazin@frib.msu.edu" "normal"
+	.about.text insert end "  or\n" "normal"
+	.about.text insert end "kaloyano@frib.msu.edu" "normal"
 	.about.text configure -state disabled
 }

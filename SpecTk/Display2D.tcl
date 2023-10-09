@@ -116,7 +116,7 @@ itcl::class Display2D {
 	public method Scroll {}
 	public method ButtonPress {x y m}
 	public method ButtonRelease {}
-	public method ExpandMinus {x y m}
+	public method ExpandMinus {}
 	public method ExpandPlus {}
 	public method ExpandAuto {}
 	public method SetLog {}
@@ -509,18 +509,17 @@ itcl::body Display2D::BindExpand {} {
 	set spectk(vvalue) ""
 	set binding BindExpand
 }
-
-itcl::body Display2D::ExpandMinus {xscreen yscreen mode} {
+itcl::body Display2D::ExpandMinus {} {
 	if {![winfo exist $graph]} {return}
-	set x [$graph axis invtransform x $xscreen]
-	set y [$graph axis invtransform y $yscreen]
+	set x [$graph axis invtransform x 100]
+	set y [$graph axis invtransform y 100]
 	set xmin [lindex [$graph axis limits x] 0]
 	set xmax [lindex [$graph axis limits x] 1]
 	set ymin [lindex [$graph axis limits y] 0]
 	set ymax [lindex [$graph axis limits y] 1]
 # this selects the display instead of performing the binding’s action
 	if {$x < $xmin || $x > $xmax || $y < $ymin || $y > $ymax} {
-		$page SelectDisplay $id $mode
+		$page SelectDisplay $id 0
 		return
 	}
 	set min [$palette GetMember min]
@@ -532,7 +531,6 @@ itcl::body Display2D::ExpandMinus {xscreen yscreen mode} {
 	ResizeImage
 	set autoscale 0
 }
-
 itcl::body Display2D::ExpandPlus {} {
 	if {![winfo exist $graph]} {return}
 	set min [$palette GetMember min]
@@ -926,7 +924,7 @@ itcl::body Display2D::UpdateROIResults {wave} {
 	global spectk
 	if {[$graph marker exist roidisplay]} {$graph marker delete roidisplay}
 	set str [$wave GetMember name]
-	append str [format "\n%-8s%-8s%-8s%-8s%-8s%-8s%-8s" ROI Sum Ratio <X> <Y> XRMS YRMS]
+	append str [format "\n%-8s%-8s%-8s%-8s%-8s%-8s%-8s" ROI Sum Ratio <X> <Y> FWHM_X FWHM_Y]
 	set r [$wave GetMember calc(All)]
 	append str [format "\n%-8s%- 8.7g%- 8.5g%- 8.5g%- 8.5g%- 8.5g%- 8.5g" \
 	All [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5]]
