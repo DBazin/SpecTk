@@ -6,7 +6,7 @@ proc DataServerAccept {cid addr port} {
 	fileevent $cid readable "DataServerHandle $cid"
 	fconfigure $cid -translation binary -encoding binary
 	set clients(data$clients(connected)) $cid
-#	puts "Server accepted connection from $cid at address $addr, port $port"
+	puts "Server accepted connection from $cid at address $addr, port $port"
 }
 
 proc CommandServerAccept {cid addr port} {
@@ -187,7 +187,8 @@ proc StartServer {} {
 	global clients
 	set clients(connected) 0
 	set clients(message) "0 clients connected"
-	set clients(port) 9001
+    set clients(port) [expr {int(rand()*100+9000)}]
+    #set clients(port) 9001
 	set clients(inhibit) 0
 	while {[catch "socket -server CommandServerAccept $clients(port)"] || [catch "socket -server DataServerAccept [expr $clients(port)+1]"]} {
 		incr clients(port) 2

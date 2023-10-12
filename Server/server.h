@@ -17,6 +17,7 @@
 #include <tkDecls.h>
 #include <TCLCommandPackage.h>
 #include <TclGrammerApp.h>
+#include <TCLResult.h>
 
 /*--------------------------------------------------------------------------------------------*/
 
