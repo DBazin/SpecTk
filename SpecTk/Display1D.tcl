@@ -252,7 +252,10 @@ itcl::body Display1D::UpdateDisplay {} {
 		$graph configure -title $title
 	}
 	if {$autoscale} {ExpandAuto}
-	if {$log} {SetLog}
+	if {$log} {
+		$waves OffZero
+		SetLog
+}
 	if {!$log} {SetLin}
 	if {$xgrid || $ygrid} {$graph grid on} else {$graph grid off}
 	if {$xgrid} {$graph grid configure -mapx x} else {$graph grid configure -mapx ""}

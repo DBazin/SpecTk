@@ -66,6 +66,7 @@ itcl::class Wave1D {
 	public method Write {file}
 	public method Read {}
 	public method toggleOffset {check}
+	public method OffZero {}
 }
 
 itcl::body Wave1D::Assign {s} {
@@ -300,6 +301,9 @@ itcl::body Wave1D::toggleOffset {check} {
     }
 }
 
+itcl::body Wave1D::OffZero {} {
+	set offset 0
+}
 itcl::body Wave1D::Write {file} {
 	puts $file "##### Begin Wave1D $this definition #####"
 	puts $file "Wave1D $this $name"

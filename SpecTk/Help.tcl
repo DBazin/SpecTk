@@ -302,9 +302,10 @@ proc DisplayAbout {} {
 	.about.text tag configure normal -font "Helvetica -12" -justify center
 	.about.text tag configure green -foreground darkgreen
 	.about.text insert end "SpecTk\n" "big green"
-	.about.text insert end "version 1.3.2\n\n" "normal green"
+	.about.text insert end "version 1.3.2a\n" "normal green"
+	.about.text insert end "10/25/2023\n\n" "normal green"
 	.about.text insert end "A displayer for SpecTcl\n" "normal"
-	.about.text insert end "© NSCL/MSU 2004\n" "normal"
+	.about.text insert end "\A9 NSCL/MSU 2004\n" "normal"
 	.about.text insert end "Written after hours by D. Bazin\n" "normal"
 	.about.text insert end "on a PowerBook G4 running Mac OS X\n" "normal"
 	.about.text insert end "with the help of two great Tcl/Tk packages:\n" "normal"

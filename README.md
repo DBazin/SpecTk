@@ -8,3 +8,8 @@ SpecTk 1.3.2 10/11/2023
 Bug Fixes:
 2D minus- An error no longer occurs when pressing the minus button for a 2D plot  
 1D log- 1D log plots now display values less than 1 properly  
+
+SpecTk 1.3.2a 10/28/2023
+
+Minor fix to how updates work with 1D graphs
+OT - fix for loading image
