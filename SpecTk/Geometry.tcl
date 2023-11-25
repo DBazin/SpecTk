@@ -98,6 +98,7 @@ proc SelectMagicButtons {w r c} {
 
 proc CreateNewPage {} {
 	global spectk
+	global List
 # if the page already exists we need to find a new name for it
 	if {[lsearch [itcl::find objects -isa Page] $spectk(pageName)] != -1} {
 		set i 1
@@ -105,6 +106,7 @@ proc CreateNewPage {} {
 		set spectk(pageName) page$i
 	}
 	Page $spectk(pageName) $spectk(pages) $spectk(pageRows) $spectk(pageColumns)
+	$List addPage $spectk(pageName)
 	$spectk(pageName) Resize
 	$spectk(tools).select select
 	$spectk(tools).select invoke
@@ -125,9 +127,11 @@ proc ModifyPage {} {
 
 proc DeletePage {} {
 	global spectk
+	global List
 	set tab [$spectk(pages) id select]
 	set frame [$spectk(pages) tab cget $tab -window]
 	set page [lindex [split $frame .] end]
+	$List removePage $page
 #	$spectk(pages) delete $tab
 #	destroy $frame
 	itcl::delete object $page

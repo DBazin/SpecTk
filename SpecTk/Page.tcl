@@ -83,6 +83,10 @@ itcl::class Page {
 	public method PostScript {l}
 	public method TabCommand {}
 	public method RemoveDisplay {id} {unset Display($id)}
+	method getName {}
+}
+itcl::body Page::getName {} {
+	return [$parent tab cget $index -text]
 }
 
 itcl::body Page::Resize {} {

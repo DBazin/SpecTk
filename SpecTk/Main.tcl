@@ -38,10 +38,11 @@ source $SpecTkHome/Fit.tcl
 source $SpecTkHome/FitDialog.tcl
 source $SpecTkHome/Print.tcl
 source $SpecTkHome/GraphDialog.tcl
+source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.3.2"
+	set spectk(version) "1.3.3"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -57,6 +58,9 @@ proc SetupSpecTk {} {
 	set spectk(pageUpdate) 0
 	set spectk(preferences) mac
 	set spectk(disablemouse) 0
+
+	global List
+	set List [PageList create]
 
 	set spectk(toplevel) .top
 	frame $spectk(toplevel) -borderwidth 2 -relief raised -width 1600 -height 1200
@@ -232,6 +236,13 @@ proc SetupMenuBar {} {
 	menu $w -tearoff 0
 	$w add checkbutton -label "Display Help" -command EnableHelp -variable spectk(helptoggle)
 	$spectk(menubar) insert end cascade -label Help -menu $w 
+
+# Tab menu
+	set w $spectk(menubar).tab
+	menu $w -tearoff 0
+	$w add command -label "Reorder" -command initReorder
+	$w add command -label "Alphabetical" -command alphabeticalTab 
+	$spectk(menubar) insert end cascade -label Tab -menu $w 
 }
 
 proc SetupStatus {} {
@@ -853,6 +864,7 @@ proc NewConfiguration {} {
 
 proc LoadConfiguration {config} {
 	global spectk
+	global List
 	if {![info exist spectk(loaddir)]} {set spectk(loaddir) ""}
 	if {[string equal $config ""]} {
 		set config [tk_getOpenFile -title "Select a SpecTk configuration file" \
@@ -874,12 +886,17 @@ proc LoadConfiguration {config} {
 		lappend spectk(spectrumList) $name
 	}
 # Process all objects
+
+	set fr [open $spectk(configName) r]
+	$List readList $fr
+	set pages [$List getPages]
+
 	foreach w [itcl::find object -isa Wave1D] {$w Read}
 	foreach w [itcl::find object -isa Wave2D] {$w Read}
 	foreach d [itcl::find object -isa Display1D] {$d Read}
 	foreach d [itcl::find object -isa Display2D] {$d Read}
 	foreach r [itcl::find object -isa ROI] {$r Read}
-	foreach p [itcl::find object -isa Page] {$p Read}
+	foreach p [$List getPages] {$p Read}
 	UpdateAll
 	if {[info exist spectk(geometry)] && $spectk(resizeWindow)} {wm geometry . $spectk(geometry)}
 	EnableHelp
@@ -964,6 +981,12 @@ proc SaveConfiguration {} {
 	set spectk(geometry) [wm geometry .]
 	set f [open $spectk(configName) w]
 	puts $f "# SpecTk configuration written on [clock format [clock seconds]]"
+	
+	global List
+	set fr [open $spectk(configName) r]
+	$List getPages
+	$List writeList $f $fr
+
 	foreach n [array names spectk] {
 		if {[lsearch $forbidden $n] == -1} {puts $f "set spectk($n) \"$spectk($n)\""}
 	}
@@ -973,7 +996,7 @@ proc SaveConfiguration {} {
 	foreach d [itcl::find object -isa Display2D] {
 		if {[llength [$d GetMember waves]] == 0} {itcl::delete object $d}
 	}
-	foreach p [itcl::find object -isa Page] {$p Write $f}
+	foreach p [$List getPages] {$p Write $f}
 	foreach d [itcl::find object -isa Display1D] {$d Write $f}
 	foreach d [itcl::find object -isa Display2D] {$d Write $f}
 	foreach w [itcl::find object -isa Wave1D] {$w Write $f}
@@ -1037,6 +1060,73 @@ proc ExitSpecTk {} {
 	if {![string equal [itcl::find classes Display2D] ""]} {itcl::delete class Display2D}
 	if {![string equal [itcl::find classes Palette] ""]} {itcl::delete class Palette}
 	destroy .
+}
+
+proc reorderDisplay {pageList} {
+    	 global List
+   	 toplevel .pages
+   	 wm title .pages "Reorder Window"
+
+   	 set options [list]
+   	 for {set i 1} {$i <= [llength $pageList]} {incr i} {
+   		 lappend options $i
+   	 }
+
+   	 set i 0
+    	 set names [$List listName]
+  	 foreach page $pageList {
+   		 frame .pages.frame_$page
+   		 set position [expr {$i + 1}]  ;# Calculate the position (starting from 1)
+   		 set selectedOptionVar(selectedOption_$page) $position
+   		 incr i
+   		 label .pages.label_$page -text "[lindex $names [expr $i-1]] Position:"
+   		 ttk::combobox .pages.dropdown_$page -values $options -textvariable selectedOptionVar(selectedOption_$page) -state readonly
+   		 pack .pages.frame_$page -side top -fill x
+   		 pack .pages.label_$page -side top -padx 10
+   		 pack .pages.dropdown_$page -side top -padx 10
+   		 .pages.dropdown_$page current [expr {$position-1}]  ;# Set the default value
+   	 }
+
+   	 button .pages.goButton -text "Go" -command [list goReOrder $pageList]
+   	 pack .pages.goButton -side bottom -pady 10
+}
+
+proc goReOrder {pageList} {
+	global spectk
+	global List
+	set selectedValues [list]
+	foreach page $pageList {
+		lappend selectedValues [.pages.dropdown_$page get]
+	}
+	set bool [$List checkList $selectedValues]
+	if {$bool == 1} {
+		$List reOrder $selectedValues
+		SaveConfiguration
+		LoadConfiguration $spectk(configName)
+
+		destroy .pages
+	}
+}
+
+proc initReorder {} {
+
+	global spectk
+	global List
+	set fr [open $spectk(configName) r]
+	set pages [$List getPages2 $fr]
+	reorderDisplay $pages
+
+}
+
+proc alphabeticalTab {} {
+	global spectk
+	global List
+	set fr [open $spectk(configName) r]
+	$List getPages2 $fr
+	$List alphaPage
+	SaveConfiguration
+	LoadConfiguration $spectk(configName)
+	
 }
 
 SetupSpecTk
