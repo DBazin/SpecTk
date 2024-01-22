@@ -12,6 +12,10 @@ itcl::class Page {
 	private variable frame
 	private variable display
 	private variable Display
+	private variable tabSave
+	private variable name
+	private variable tabName
+	private variable nameCheck
 	
 	constructor {w r c} {
 		global spectk
@@ -25,6 +29,7 @@ itcl::class Page {
 		set oneDisplay ""
 		set name [string trimleft $this ::]
 		set frame [frame $w.$name]
+		set nameCheck 0
 		if {[catch "$w tab cget select -text"]} {
 			set index [$w insert end -text $name -window $frame]
 		} else {
@@ -84,9 +89,31 @@ itcl::class Page {
 	public method TabCommand {}
 	public method RemoveDisplay {id} {unset Display($id)}
 	method getName {}
+	public method disableTab {}
+	public method enableTab {}
 }
 itcl::body Page::getName {} {
 	return [$parent tab cget $index -text]
+}
+
+itcl::body Page::disableTab {} {
+	if {$nameCheck == 0} {
+		set tabName [$parent tab cget $index -text]
+		set nameCheck 1
+	}
+	$parent delete $index
+}
+
+itcl::body Page::enableTab {} {
+	if {[catch "$parent tab cget select -text"]} {
+		set index [$parent insert end -text $name -window $frame]
+	} else {
+		set index [$parent insert select -text $name -window $frame]
+		$parent move $index after [$parent id select]
+		$parent select $index
+	}
+	$parent tab configure $index -command "$this TabCommand"
+	$parent tab configure $index -text $tabName
 }
 
 itcl::body Page::Resize {} {

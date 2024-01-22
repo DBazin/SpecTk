@@ -84,9 +84,12 @@ proc CreateROIDialog {} {
 	button $w.calcsel -text "Calculate Selected Graph(s)" -font "general" -command ROIDialogCalculateSelected
 	button $w.calcall -text "Calculate Selected Page" -font "general" -command ROIDialogCalculateAll
 	button $w.clear -text "Clear History" -font "general" -command ROIDialogClearHistory
+	button $w.print -text "Write ROI" -font "general" -command printResults
+
 	grid $w.calcsel -sticky news
 	grid $w.calcall -sticky news
 	grid $w.clear -sticky news
+	grid $w.print -sticky news
 
 	set w $spectk(drawer).pages.roi.create
 	grid remove $w.coord $w.enter $w.cancel $w.validate
@@ -197,13 +200,13 @@ proc ROIDialogCalculateDisplay {display} {
 			$wave CalculateAll
 			set r [$wave GetMember calc(All)]
 			if {[$display isa Display1D]} {
-				$w.text insert end "ROI	Sum	Ratio	<X>	RMS\n" "blue"
+				$w.text insert end "ROI	Sum	Ratio	<X>	FWHM\n" "blue"
 				$w.text insert end "All" "red" "	[lindex $r 0]	[lindex $r 1]	[lindex $r 2]	[lindex $r 3]\n" "black"
 			}
 			if {[$display isa Display2D]} {
-				$w.text insert end "ROI	Sum	Ratio	<X/Y>	RMS\n" "blue"
+				$w.text insert end "ROI	Sum	Ratio	<X/Y>	FWHM\n" "blue"
 				$w.text insert end "All" "red" "	[lindex $r 0]	[lindex $r 1]	[lindex $r 2]	[lindex $r 4]\n" "black"
-				$w.text insert end "				[lindex $r 3]	[lindex $r 5]\n" "black"
+				$w.text insert end "			[lindex $r 3]	[lindex $r 5]\n" "black"
 			}
 			foreach roi [$wave FindROIs] {
 				$wave CalculateROI $roi
@@ -213,7 +216,7 @@ proc ROIDialogCalculateDisplay {display} {
 				}
 				if {[$display isa Display2D]} {
 					$w.text insert end "[$roi GetMember name]" "red" "	[lindex $r 0]	[lindex $r 1]	[lindex $r 2]	[lindex $r 4]\n" "black"
-					$w.text insert end "				[lindex $r 3]	[lindex $r 5]\n" "black"
+					$w.text insert end "			[lindex $r 3]	[lindex $r 5]\n" "black"
 				}
 			}
 			$w.text insert end "\n"
@@ -511,3 +514,55 @@ proc ROIDialogPostScript {} {
 	$c postscript -file roiresults.eps
 	destroy .temp
 }
+
+proc printResults {} {
+	global spectk
+	set tab [$spectk(pages) id select]
+	if {[string equal $tab ""]} {return}
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	set rows [$page GetMember rows]
+	set cols [$page GetMember columns]
+	set w $spectk(drawer).pages.roi.history
+	set fName RoiValues.csv
+	set f [open $fName w]
+	puts $f "ROI,Sum,Ratio,<X>,<Y>,FWHM1,FWHM2"
+	for {set ir 0} {$ir < $rows} {incr ir} {
+		for {set ic 0} {$ic < $cols} {incr ic} {
+			set display [format %sR%dC%d $page $ir $ic]
+			ROIPrint $display $f
+		}
+	}
+	close $f
+}
+
+proc ROIPrint {display file} {
+	if {[lsearch [itcl::find object] $display] != -1} {
+		foreach wave [$display GetMember waves] {
+			$wave CalculateAll
+			set waveName [lindex [split [$display GetMember waves] "::"] end]
+			set r [$wave GetMember calc(All)]
+			if {[$display isa Display1D]} {
+				puts $file " All- $waveName,[lindex $r 0],[lindex $r 1],[lindex $r 2],-,[lindex $r 3],-"
+            		}
+
+            		if {[$display isa Display2D]} {
+				puts $file "All- $waveName,[lindex $r 0],[lindex $r 1],[lindex $r 2],[lindex $r 3],[lindex $r 4],[lindex $r 5]"
+            		}
+
+			foreach roi [$wave FindROIs] {
+				$wave CalculateROI $roi
+ 				set r [$wave GetMember calc($roi)]
+
+				if {[$display isa Display1D]} {
+					puts $file "[$roi GetMember name],[lindex $r 0],[lindex $r 1],[lindex $r 2],-,[lindex $r 3],-"
+				}
+
+				if {[$display isa Display2D]} {
+					puts $file "[$roi GetMember name],[lindex $r 0],[lindex $r 1],[lindex $r 2],[lindex $r 3],[lindex $r 4],[lindex $r 5]"
+				}
+			}
+		}
+	}
+}
+

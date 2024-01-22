@@ -1,5 +1,8 @@
 proc ConnectToServer {name port} {
 	global server spectk
+	global tempNames
+	set tempNames(port) $port
+	set tempNames(name) $name
 	if {[info exist server(connected)] && $server(connected)} {DisconnectFromServer}
 	set commandPort $port
 	set dataPort [expr $port+1]
@@ -192,37 +195,7 @@ proc ClientSpectrum {args} {
 	update
 # First catch -delete keyword
 	if {[string equal [lindex $args 0] -delete]} {
-# Make a list of all existing waves
-		set names ""
-		set wnames [itcl::find object -class Wave1D]
-		set n2 [itcl::find object -class Wave2D]
-		foreach n $n2 {lappend wnames $n}
-# Catch -all keyword - all spectra deleted
-		if {[string equal [lindex $args 1] -all]} {
-			set names $wnames
-			set client(spectrumList) ""
-			set client(applyList) ""
-# List of spectra to delete
-		} else {
-			set snames [lreplace $args 0 0]
-			foreach w $wnames {
-				if {[lsearch $snames [$w GetMember name]] != -1} {lappend names $w}
-			}
-			foreach s $snames {
-				set index [lsearch $client(spectrumList) "* $s *"]
-				set client(spectrumList) [lreplace $client(spectrumList) $index $index]
-				set index [lsearch $client(applyList) "$s *"]
-				set client(applyList) [lreplace $client(applyList) $index $index]
-			}
-		}
-# for each deleted spectrum delete wave and graph but not display
-		foreach name $names {
-			itcl::delete object $name
-		}
-		UpdateAssignDialog
-		after 10
-		pack forget $spectk(status).icon
-		update
+
 		return
 	}
 

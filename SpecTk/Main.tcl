@@ -42,7 +42,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.3.3"
+	set spectk(version) "1.4.3a"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -61,6 +61,10 @@ proc SetupSpecTk {} {
 
 	global List
 	set List [PageList create]
+
+	global tempNames
+	set tempNames(port) 0
+	set tempNames(name) 0
 
 	set spectk(toplevel) .top
 	frame $spectk(toplevel) -borderwidth 2 -relief raised -width 1600 -height 1200
@@ -182,6 +186,7 @@ proc SetupMenuBar {} {
 	UpdateRecentServerMenu
 	$w add command -label "Disconnect" -command DisconnectFromServer
 	$w add separator
+	$w add command -label "Disconnect and Reconnect" -command test
 	$w add command -label "Quit SpecTk" -command ExitSpecTk -accelerator "Ctrl-Q"
 	bind $w <Motion> "%W postcascade @%y"
 	$spectk(menubar) add cascade -label SpecTk -menu $w
@@ -194,6 +199,8 @@ proc SetupMenuBar {} {
 	bind $spectk(toplevel) <Control-n> NewConfiguration
 	$w add command -label Open... -command "LoadConfiguration \"\"" -accelerator "Ctrl-O"
 	bind $spectk(toplevel) <Control-o> "LoadConfiguration \"\""
+	$w add command -label Append... -command "AppendConfiguration \"\"" -accelerator "Ctrl-A"
+	bind $spectk(toplevel) <Control-a> "AppendConfiguration \"\""
 	menu $w.recent -tearoff 0
 	if {[file exist SpecTkRecentFiles.tcl]} {source SpecTkRecentFiles.tcl}
 	$w add cascade -label "Open Recent" -menu $w.recent
@@ -207,6 +214,20 @@ proc SetupMenuBar {} {
 	bind $spectk(toplevel) <Control-p> CreatePrintDialog
 	bind $w <Motion> "%W postcascade @%y"
 	$spectk(menubar) add cascade -label File -menu $w
+
+# Tool menu
+	set w $spectk(menubar).tool
+	menu $w -tearoff 0
+	menu $w.tabcontrol -tearoff 0
+	$w.tabcontrol add command -label "Reorder" -command initReorder
+	$w.tabcontrol add command -label "Alphabetical" -command alphabeticalTab
+	$w add cascade -label "Tab Control" -menu $w.tabcontrol
+	$w add command -label "Unstick" -command {
+		ToolCommand BindDisplay
+		update
+		}
+	$w add command -label "Remove Appended" -command removeAppended
+	$spectk(menubar) insert end cascade -label Tool -menu $w 
 
 # Options menu
 	set w $spectk(menubar).options
@@ -236,13 +257,6 @@ proc SetupMenuBar {} {
 	menu $w -tearoff 0
 	$w add checkbutton -label "Display Help" -command EnableHelp -variable spectk(helptoggle)
 	$spectk(menubar) insert end cascade -label Help -menu $w 
-
-# Tab menu
-	set w $spectk(menubar).tab
-	menu $w -tearoff 0
-	$w add command -label "Reorder" -command initReorder
-	$w add command -label "Alphabetical" -command alphabeticalTab 
-	$spectk(menubar) insert end cascade -label Tab -menu $w 
 }
 
 proc SetupStatus {} {
@@ -260,6 +274,7 @@ proc SetupToolBar {} {
 	radiobutton $w.select -image select -width $spectk(toolwidth) -height $spectk(toolwidth) \
 	-command "ToolCommand BindSelect" -variable spectk(currentTool) -value BindSelect \
 	-indicatoron 0
+	bind $w <Control-z> {ToolCommand BindSelect}
 	pack $w.select -side top
 #	radiobutton $w.display -image display -width $spectk(toolwidth) -height $spectk(toolwidth) \
 	-command "ToolCommand BindDisplay" -variable spectk(currentTool) -value BindDisplay \
@@ -859,12 +874,16 @@ proc DeleteAllObjects {} {
 }
 
 proc NewConfiguration {} {
+	global List
+	$List enable+
+	$List clearList
 	DeleteAllObjects
 }
 
 proc LoadConfiguration {config} {
 	global spectk
 	global List
+	$List enable+
 	if {![info exist spectk(loaddir)]} {set spectk(loaddir) ""}
 	if {[string equal $config ""]} {
 		set config [tk_getOpenFile -title "Select a SpecTk configuration file" \
@@ -897,12 +916,17 @@ proc LoadConfiguration {config} {
 	foreach d [itcl::find object -isa Display2D] {$d Read}
 	foreach r [itcl::find object -isa ROI] {$r Read}
 	foreach p [$List getPages] {$p Read}
+
 	UpdateAll
 	if {[info exist spectk(geometry)] && $spectk(resizeWindow)} {wm geometry . $spectk(geometry)}
 	EnableHelp
 	StoreRecentFile $config
 	UpdateRecentFileMenu
 	wm title . "SpecTk $spectk(version) ($config)"
+
+	set disableList [$List getDisabled]
+	$List getObjects1
+	$List disable+
 }
 
 proc UpdateRecentFileMenu {} {
@@ -984,7 +1008,7 @@ proc SaveConfiguration {} {
 	
 	global List
 	set fr [open $spectk(configName) r]
-	$List getPages
+	$List enable+
 	$List writeList $f $fr
 
 	foreach n [array names spectk] {
@@ -1005,6 +1029,7 @@ proc SaveConfiguration {} {
 		if {![$r GetMember isgate]} {$r Write $f}
 	}
 	close $f
+	$List disable+
 }
 
 proc SaveAsConfiguration {} {
@@ -1063,32 +1088,102 @@ proc ExitSpecTk {} {
 }
 
 proc reorderDisplay {pageList} {
-    	 global List
-   	 toplevel .pages
-   	 wm title .pages "Reorder Window"
+    	global List
+    	toplevel .pages
+    	wm title .pages "Reorder Window"
 
-   	 set options [list]
-   	 for {set i 1} {$i <= [llength $pageList]} {incr i} {
-   		 lappend options $i
-   	 }
+    	set options [list]
+    	lappend options "Disable"
+    	for {set i 1} {$i <= [llength $pageList]} {incr i} {
+        	lappend options $i
+    	}
 
-   	 set i 0
-    	 set names [$List listName]
-  	 foreach page $pageList {
-   		 frame .pages.frame_$page
-   		 set position [expr {$i + 1}]  ;# Calculate the position (starting from 1)
-   		 set selectedOptionVar(selectedOption_$page) $position
-   		 incr i
-   		 label .pages.label_$page -text "[lindex $names [expr $i-1]] Position:"
-   		 ttk::combobox .pages.dropdown_$page -values $options -textvariable selectedOptionVar(selectedOption_$page) -state readonly
-   		 pack .pages.frame_$page -side top -fill x
-   		 pack .pages.label_$page -side top -padx 10
-   		 pack .pages.dropdown_$page -side top -padx 10
-   		 .pages.dropdown_$page current [expr {$position-1}]  ;# Set the default value
-   	 }
+    	set names [$List listName]
+    	set disableList [$List getDisabled]
+    	set i 0
 
-   	 button .pages.goButton -text "Go" -command [list goReOrder $pageList]
-   	 pack .pages.goButton -side bottom -pady 10
+    	frame .pages.frame -borderwidth 2 -relief groove
+    	pack .pages.frame -side left -fill y
+
+    	label .pages.headerLabel -text "Positions" -font {Helvetica 14 bold}
+    	pack .pages.headerLabel -side top
+
+	button .pages.goButton -text "Go" -command [list goReOrder $pageList]
+    	pack .pages.goButton -side bottom -pady 10
+
+    	set canvas [canvas .pages.canvas -yscrollcommand ".pages.scrollbar set"]
+    	scrollbar .pages.scrollbar -command "$canvas yview"
+
+    	pack .pages.canvas -side left -fill both -expand 1
+    	pack .pages.scrollbar -side left -fill y
+
+    	set totalFrames [llength $pageList]
+
+    	foreach page $pageList {
+        	frame $canvas.frame_$page
+        	set position [expr {$i + 2}]
+        	set selectedOptionVar(selectedOption_$page) $position
+        	incr i
+        	label $canvas.frame_$page.label -text [format "%s" [lindex $names [expr {$i - 1}]]] -width 7
+
+        	ttk::combobox $canvas.frame_$page.dropdown -values $options -textvariable selectedOptionVar(selectedOption_$page) -state readonly
+        	pack $canvas.frame_$page -side top -fill x
+        	pack $canvas.frame_$page.label -side left -padx 10
+        	pack $canvas.frame_$page.dropdown -side left -padx 10
+        	$canvas create window 0 [expr {$i * 30}] -anchor nw -window $canvas.frame_$page
+        	$canvas.frame_$page.dropdown current [expr {$position-1}]
+        	if {$page in $disableList} {
+            	$canvas.frame_$page.dropdown current [expr {0}]
+        	}
+
+        	bind $canvas.frame_$page.dropdown <<ComboboxSelected>> [list checkValues $canvas.frame_$page.dropdown $page $pageList]
+    	}
+
+    	set canvasHeight [expr {($totalFrames + 1) * 30}]
+    	$canvas configure -scrollregion [list 0 0 0 $canvasHeight]
+    	$canvas yview moveto 0.0
+}
+
+proc checkValues {changedCombobox page pageList} {
+	global selectedOptionVar
+
+	set check 0
+
+	set currentValue [$changedCombobox get]
+	foreach otherPage [array names selectedOptionVar] {
+		set otherPageId [string range $otherPage [string length "selectedOption_"] end]
+		if {$otherPageId ne $page} {
+			set otherValue $selectedOptionVar($otherPage)
+			if {$otherValue eq $currentValue && $currentValue ne "Disable"} {
+				set check 1
+				set newValue [getValue $pageList]
+				set selectedOptionVar($otherPage) $newValue
+            
+				break ;
+        		}
+		}
+	}
+}
+
+proc getValue {pageList} {
+	set possibleValues [list]
+	set selectedValues [list]
+	set i 1
+
+	foreach page $pageList {
+        	set widgetName ".pages.canvas.frame_$page.dropdown"
+        	lappend selectedValues [eval $widgetName get]
+        	lappend possibleValues $i
+        	incr i
+	}
+
+	foreach value $possibleValues {
+        	if {[lsearch -exact $selectedValues $value] == -1} {
+            		return $value
+        	}
+    	}
+
+    	return 0
 }
 
 proc goReOrder {pageList} {
@@ -1096,37 +1191,117 @@ proc goReOrder {pageList} {
 	global List
 	set selectedValues [list]
 	foreach page $pageList {
-		lappend selectedValues [.pages.dropdown_$page get]
+        	set widgetName ".pages.canvas.frame_$page.dropdown"
+        	lappend selectedValues [eval $widgetName get]
 	}
-	set bool [$List checkList $selectedValues]
-	if {$bool == 1} {
-		$List reOrder $selectedValues
-		SaveConfiguration
-		LoadConfiguration $spectk(configName)
-
+	set check [$List checkList $selectedValues]
+	if {$check == 1} {
+		$List reorder $selectedValues
+		$List disable+
+		destroy .pages
+	}
+	if {$check == 2} {
+		$List reorderDisable $selectedValues
+		$List disable+
 		destroy .pages
 	}
 }
 
 proc initReorder {} {
-
 	global spectk
 	global List
+	$List enable+
 	set fr [open $spectk(configName) r]
 	set pages [$List getPages2 $fr]
 	reorderDisplay $pages
+	$List disable+
 
 }
 
 proc alphabeticalTab {} {
 	global spectk
 	global List
+	$List enable+
 	set fr [open $spectk(configName) r]
 	$List getPages2 $fr
 	$List alphaPage
-	SaveConfiguration
-	LoadConfiguration $spectk(configName)
+	$List disable+
 	
+}
+
+proc AppendConfiguration {config} {
+	global spectk
+	global List
+	$List enable+
+	$List getMoreObjects
+	
+	set test $config
+	set previousConfig $spectk(configName)
+	set previousSpectrumList $spectk(spectrumList)
+	set previousGeometry [wm geometry .]
+
+	if {![info exist spectk(loaddir)]} {set spectk(loaddir) ""}
+	if {[string equal $config ""]} {
+		set config [tk_getOpenFile -title "Select a SpecTk configuration file" \
+		-filetypes {{"SpecTk Configuration File" {.spk}}} \
+		-initialdir $spectk(loaddir)]
+	}
+	if {[string equal $config ""]} {return}
+	set f [lindex [split $config /] end]
+	puts "f- $f"
+	set spectk(loaddir) [string trimright $config $f]
+# Keep drawer state
+	set drawer $spectk(draweropen)
+	source $config
+	set spectk(draweropen) $drawer
+# Update spectrum list
+	set spectk(spectrumList) ""
+	foreach s [spectrum -list] {
+		set name [lindex $s 1]
+		lappend spectk(spectrumList) $name
+	}
+# Process all objects
+
+	set fr [open $spectk(configName) r]
+	$List appendList $fr
+	set pages [$List getPages]
+
+	foreach w [itcl::find object -isa Wave1D] {$w Read}
+	foreach w [itcl::find object -isa Wave2D] {$w Read}
+	foreach d [itcl::find object -isa Display1D] {$d Read}
+	foreach d [itcl::find object -isa Display2D] {$d Read}
+	foreach r [itcl::find object -isa ROI] {$r Read}
+	foreach p [$List getPages] {$p Read}
+
+	UpdateAll
+	if {[info exist spectk(geometry)] && $spectk(resizeWindow)} {wm geometry . $spectk(geometry)}
+	EnableHelp
+	StoreRecentFile $config
+	UpdateRecentFileMenu
+	
+	if {[info exists previousConfig]} {
+		set spectk(configName) $previousConfig
+		set spectk(spectrumList) $previousSpectrumList
+		wm geometry . $previousGeometry
+		wm title . "SpecTk $spectk(version) ($previousConfig)"
+	}
+
+	$List compareObjects
+	set disableList [$List getDisabled]
+	$List disable+
+}
+
+proc removeAppended {} {
+	global spectk
+	global List
+	$List removeAppended
+}
+
+proc test {} {
+	global tempNames
+	DisconnectFromServer
+	puts "$tempNames(name) $tempNames(port)"
+	ConnectToServer $tempNames(name) $tempNames(port)
 }
 
 SetupSpecTk
