@@ -42,7 +42,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.4.3a"
+	set spectk(version) "1.4.3c"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -185,8 +185,8 @@ proc SetupMenuBar {} {
 	$w add cascade -label "Connect To Recent" -menu $w.recent
 	UpdateRecentServerMenu
 	$w add command -label "Disconnect" -command DisconnectFromServer
-	$w add separator
 	$w add command -label "Disconnect and Reconnect" -command test
+	$w add separator
 	$w add command -label "Quit SpecTk" -command ExitSpecTk -accelerator "Ctrl-Q"
 	bind $w <Motion> "%W postcascade @%y"
 	$spectk(menubar) add cascade -label SpecTk -menu $w
