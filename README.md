@@ -1,5 +1,10 @@
 # SpecTk<br>
 ## SpecTk is a Tcl/Tk based displayed for the SpecTcl analysis program.<br>
+## SpecTk 1.4.3c 1/22/2024<br>
+----------------------------------------------------------------------<br>
+Fixed:<br>
+When Updating Spectrums in SpecTk the axis are now updated as well
+----------------------------------------------------------------------<br>
 ----------------------------------------------------------------------<br>
 ## SpecTk 1.4.3a 1/22/2024<br>
 ----------------------------------------------------------------------<br>
