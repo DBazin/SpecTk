@@ -52,6 +52,30 @@ itcl::class Wave2D {
 	public method Clear {}
 	public method Write {file}
 	public method Read {}
+	public method getName {}
+}
+
+itcl::body Wave2D::Clear {} {
+	set bins 100
+	set low 0
+	set high 100
+	set increment ""
+	set unit unknown
+	set vunit unknown
+	set parameter ""
+	set spectrum ""
+	set type ""
+	set datatype ""
+	set gate True
+	set xlist ""
+	blt::vector destroy $this.data
+	blt::vector destroy $this.error
+	blt::vector create $this.data
+	blt::vector create $this.error
+}
+
+itcl::body Wave2D::getName {} {
+	return $name
 }
 
 itcl::body Wave2D::Assign {s} {

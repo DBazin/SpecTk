@@ -67,6 +67,30 @@ itcl::class Wave1D {
 	public method Read {}
 	public method toggleOffset {check}
 	public method OffZero {}
+	public method getName {}
+}
+
+itcl::body Wave1D::Clear {} {
+	set bins 100
+	set low 0
+	set high 100
+	set increment "1"
+	set unit unknown
+	set vunit unknown
+	set parameter ""
+	set spectrum ""
+	set type ""
+	set datatype ""
+	set gate True
+	set xlist ""
+	blt::vector destroy $this.data
+	blt::vector destroy $this.error
+	blt::vector create $this.data
+	blt::vector create $this.error
+}
+
+itcl::body Wave1D::getName {} {
+	return $name
 }
 
 itcl::body Wave1D::Assign {s} {

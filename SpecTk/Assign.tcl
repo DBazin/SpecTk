@@ -141,6 +141,30 @@ proc AssignSelectedPlus {} {
 	set spectk(selectMode) $mode
 }
 
+proc reAssignSelectedPlus {} {
+	global spectk
+	if {[string equal $spectk(spectrum) ""]} {return}
+	set page [lindex [split [$spectk(pages) tab cget select -window] .] end]
+	set selected [$page GetMember selected]
+	foreach id $selected {
+		reAssign $id
+	}
+	scan $id "R%dC%d" row column
+	incr column
+	if {$column == [$page GetMember columns]} {
+		set column 0
+		incr row
+	}
+	if {$row == [$page GetMember rows]} {
+		set row 0
+	}
+	set id [format "R%dC%d" $row $column]
+	set mode $spectk(selectMode)
+	set spectk(selectMode) single
+	$page SelectDisplay $id 1
+	set spectk(selectMode) $mode
+}
+
 proc SuperposeSelected {} {
 	global spectk
 	if {[string equal $spectk(spectrum) ""]} {return}
@@ -174,7 +198,7 @@ proc SelectAssignButton {} {
 	global spectk
 	set w $spectk(drawer).pages.assign.buttons
 	if {[string equal [$w.display cget -text] Display]} {
-		$w.display configure -text Display++
+		$w.display configure -text Display+
 	} else {
 		$w.display configure -text Display
 	}

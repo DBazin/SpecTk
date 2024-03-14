@@ -222,3 +222,54 @@ proc GraphDialogApply2D {} {
 	$display SetMember ygrid $spectk(ygrid2d)
 	$display UpdateDisplay
 }
+
+proc GDA_1D {id} {
+	global spectk
+	set tab [$spectk(pages) id select]
+	if {[string equal $tab ""]} {return}
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	set current [$page GetMember current]
+	set display [format %s%s $page $id]
+	set waves [$display GetMember waves]
+	set i [lsearch $waves $spectk(trace)]
+	set symbol [$display GetMember symbol]
+	set size [$display GetMember pixels]
+	set errorbar [$display GetMember errorbar]
+	set style [$display GetMember smooth]
+	set linewidth [$display GetMember linewidth]
+	set legend [$display GetMember legend]
+	set sym $spectk(symboltype)
+	set siz $spectk(symbolsize)
+	set err $spectk(errorbars)
+	set leg $spectk(legend)
+	if {[string equal $spectk(linestyle) none]} {
+		set line 0
+		set sty step
+	} else {
+		set line 1
+		set sty $spectk(linestyle)
+	}
+	$display SetMember symbol [lreplace $symbol $i $i $sym]
+	$display SetMember pixels [lreplace $size $i $i $siz]
+	$display SetMember errorbar [lreplace $errorbar $i $i $err]
+	$display SetMember smooth [lreplace $style $i $i $sty]
+	$display SetMember linewidth [lreplace $linewidth $i $i $line]
+	$display SetMember legend [lreplace $legend $i $i $leg]
+	$display SetMember xgrid $spectk(xgrid1d)
+	$display SetMember ygrid $spectk(ygrid1d)
+	$display UpdateDisplay
+}
+
+proc GDA_2D {id} {
+	global spectk
+	puts "GDA_2D, $id"
+	set tab [$spectk(pages) id select]
+	if {[string equal $tab ""]} {return}
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	set display [format "%s%s" $page $id]
+	$display SetMember xgrid $spectk(xgrid2d)
+	$display SetMember ygrid $spectk(ygrid2d)
+	$display UpdateDisplay
+}

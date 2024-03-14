@@ -143,6 +143,13 @@ itcl::class Display2D {
 	public method DrawYGrid {}
 	public method RemoveXGrid {}
 	public method RemoveYGrid {}
+	public method getWave {}
+}
+
+itcl::body Display2D::getWave {} {
+    if {[info exists waves]} {
+        return $waves
+    }
 }
 
 itcl::body Display2D::Resize {} {
@@ -853,7 +860,10 @@ itcl::body Display2D::UpdateROIs {} {
 
 itcl::body Display2D::Update {} {
 	if {![winfo exist $graph]} {return}
-	if {[lsearch [itcl::find object -isa Wave2D] $waves] == -1} {return}
+	if {[lsearch [itcl::find object -isa Wave2D] $waves] == -1} {
+		puts "returning"
+		return
+	}
 	$waves Update 1
 	if {[winfo exist $graph.hide]} {UpdateROIResults $waves}
 	if {$autoscale} {ExpandAuto}

@@ -42,7 +42,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.4.3c"
+	set spectk(version) "1.5.1 Beta"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -61,6 +61,9 @@ proc SetupSpecTk {} {
 
 	global List
 	set List [PageList create]
+
+	global safeMode
+	set safeMode 0	
 
 	global tempNames
 	set tempNames(port) 0
@@ -185,7 +188,7 @@ proc SetupMenuBar {} {
 	$w add cascade -label "Connect To Recent" -menu $w.recent
 	UpdateRecentServerMenu
 	$w add command -label "Disconnect" -command DisconnectFromServer
-	$w add command -label "Disconnect and Reconnect" -command test
+	$w add command -label "Disconnect and Reconnect" -command dCrC
 	$w add separator
 	$w add command -label "Quit SpecTk" -command ExitSpecTk -accelerator "Ctrl-Q"
 	bind $w <Motion> "%W postcascade @%y"
@@ -227,6 +230,9 @@ proc SetupMenuBar {} {
 		update
 		}
 	$w add command -label "Remove Appended" -command removeAppended
+	$w add command -label "Purge" -command purge
+	$w add command -label "Refresh" -command reload
+	$w add checkbutton -label "Safe Mode" -variable safeMode -onvalue 1 -offvalue 0
 	$spectk(menubar) insert end cascade -label Tool -menu $w 
 
 # Options menu
@@ -300,7 +306,10 @@ proc SetupToolBar {} {
 	-command "ToolCommand BindEdit" -variable spectk(currentTool) -value BindEdit \
 	-indicatoron 0
 	pack $w.edit -side top
-	ToolCommand BindSelect
+	radiobutton $w.grid -image GRID -width $spectk(toolwidth) -height $spectk(toolwidth) \
+	-command "grid2" -variable spectk(currentTool) -value grid2 \
+	-indicatoron 0
+	pack $w.grid -side top
 	set spectk(currentTool) BindSelect
 }
 
@@ -331,6 +340,12 @@ proc ToolCommand {command} {
 
 proc SetupImages {} {
 	global SpecTkHome
+
+	set logo_path "logo8.gif"
+	set logo_image [image create photo -file $logo_path]
+
+	wm iconphoto . $logo_image
+
 	image create photo gaussian -file $SpecTkHome/gaussian.gif
 	image create photo lorentzian -file $SpecTkHome/lorentzian.gif
 	image create photo exponential -file $SpecTkHome/exponential.gif
@@ -352,6 +367,7 @@ proc SetupImages {} {
 	image create photo Open -file $SpecTkHome/Open.gif
 	image create photo Close -file $SpecTkHome/Closed.gif
 	image create photo Communicate -file $SpecTkHome/Communicate.gif
+	image create photo GRID -file $SpecTkHome/grid.gif
 	image create bitmap dot -data "
 	#define blank_width 2\n
 	#define blank_height 2\n
@@ -883,6 +899,8 @@ proc NewConfiguration {} {
 proc LoadConfiguration {config} {
 	global spectk
 	global List
+	global safeMode 
+
 	$List enable+
 	if {![info exist spectk(loaddir)]} {set spectk(loaddir) ""}
 	if {[string equal $config ""]} {
@@ -892,6 +910,10 @@ proc LoadConfiguration {config} {
 	}
 	if {[string equal $config ""]} {return}
 	set f [lindex [split $config /] end]
+	if {$safeMode == 1} {
+		puts "working"
+		filter $f
+	}
 	set spectk(loaddir) [string trimright $config $f]
 	DeleteAllObjects
 # Keep drawer state
@@ -1248,7 +1270,6 @@ proc AppendConfiguration {config} {
 	}
 	if {[string equal $config ""]} {return}
 	set f [lindex [split $config /] end]
-	puts "f- $f"
 	set spectk(loaddir) [string trimright $config $f]
 # Keep drawer state
 	set drawer $spectk(draweropen)
@@ -1297,11 +1318,161 @@ proc removeAppended {} {
 	$List removeAppended
 }
 
-proc test {} {
+proc filter {file} {
+	set f [open $file r]
+	set lines [read $f]
+	close $f
+
+	set fout [open $file w]
+	set inChunk 0
+	set chunk {}
+
+	foreach line [split $lines "\n"] {
+		if {[string match "##### Begin ROI*" $line]} {
+			set inChunk 1
+        	}
+		if {$inChunk} {
+			lappend chunk $line
+		} else {
+			puts $fout $line
+		}
+		if {[string match "##### End of ROI*" $line]} {
+			set inChunk 0
+			set emptyLine [lsearch -glob $chunk "*parameters \"\"*"]
+
+			if {$emptyLine  == -1} {
+				foreach line $chunk {
+					puts $fout $line
+				}
+			}
+		set chunk {}
+		}
+	}
+	close $fout
+}
+
+proc purge {} {
+        set waveList {}
+        set removeList {}
+	set roiList {}
+
+        foreach d [itcl::find object -isa Display1D] {
+            lappend waveList [$d getWave]
+        }
+
+        foreach d [itcl::find object -isa Display2D] {
+            lappend waveList [$d getWave]
+        }
+
+
+	foreach w [itcl::find object -isa Wave1D] {
+		if {[lsearch $waveList $w] < 0} {
+			lappend removeList $w
+		}
+	}
+	foreach w [itcl::find object -isa Wave2D] {
+		if {[lsearch $waveList $w] < 0} {
+			lappend removeList $w
+		}
+	}
+
+	foreach wave $removeList {
+		foreach roi [itcl::find object -class ROI] {
+			set roiParam [join [lrange [split [$roi GetMember parameters] .] 2 end] .]
+			set waveSpec [join [lrange [split [$wave GetMember spectrum] .] 1 end] .]
+			if {[string equal $roiParam $waveSpec]} {
+				lappend roiList $roi
+			}
+		}
+	}
+
+	foreach obj $removeList {
+		itcl::delete object $obj
+	}
+	foreach obj $roiList {
+		itcl::delete object $obj
+	}
+}
+
+proc reAssign {this} {
+	global spectk
+	set tab [$spectk(pages) id select]
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split [$spectk(pages) tab cget select -window] .] end]
+
+	set id "${page}${this}"
+	set id2 "::${page}${this}"
+	set objectname [$id getWave]
+	set currentSpectrum [$objectname getName]
+
+	if {[string equal $objectname ""]} {return}
+
+	set type [lindex [spectrum -list $objectname] 2]
+	if {[string equal $type b]} {set type 1}
+	if {[string equal $type g1]} {set type 1}
+	if {[string equal $type s]} {set type 2}
+	if {[string equal $type g2]} {set type 2}
+
+	if {$type == 1} {set objectname "::Wave1D::[Proper $objectname]"}
+	if {$type == 2} {set objectname "::Wave2D::[Proper $objectname]"}
+
+	if {[lsearch [itcl::find object] $objectname] == -1} {		
+		if {$type == 1} {catch {Wave1D  $objectname $currentSpectrum}}
+		if {$type == 2} {catch {Wave2D  $objectname $currentSpectrum}}
+	}
+
+	$objectname Assign $currentSpectrum
+
+	$objectname CreateROI
+
+	$id2 AssignWave $objectname
+
+	$id2 UpdateROIs
+}
+
+proc reload {} {
+	global spectk
+	set tab [$spectk(pages) id select]
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split [$spectk(pages) tab cget select -window] .] end]
+	set number [$page getNum]
+
+	for {set i 0} {$i < $number} {incr i} {
+		catch {reAssignSelectedPlus}
+	}
+}
+
+proc dCrC {} {
 	global tempNames
 	DisconnectFromServer
-	puts "$tempNames(name) $tempNames(port)"
 	ConnectToServer $tempNames(name) $tempNames(port)
+}
+
+proc grid2 {} {
+	global spectk
+
+	set objects [itcl::find objects]
+	set tab [$spectk(pages) id select]
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	set selected [$page GetMember selected]
+	foreach id $selected {
+		set display [format "%s%s" $page $id]
+		set index [lsearch $objects $display]
+		if {$index >= 0} {
+			set xgrid [$display GetMember xgrid]
+			set ygrid [$display GetMember ygrid]
+			if {[lsearch [itcl::find object -isa Display1D] $display] != -1} {
+				set spectk(xgrid1d) [expr {1 - $xgrid}]
+				set spectk(ygrid1d) [expr {1 - $ygrid}]
+				GDA_1D $id
+			} elseif {[lsearch [itcl::find object -isa Display2D] $display] != -1} {
+				set spectk(xgrid2d) [expr {1 - $xgrid}]
+				set spectk(ygrid2d) [expr {1 - $ygrid}]
+				GDA_2D $id
+			}
+		}
+	}
 }
 
 SetupSpecTk

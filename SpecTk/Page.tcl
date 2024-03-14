@@ -91,7 +91,13 @@ itcl::class Page {
 	method getName {}
 	public method disableTab {}
 	public method enableTab {}
+	public method getNum {}
 }
+
+itcl::body Page::getNum {} {
+	return [expr {$rows * $columns}]
+}
+
 itcl::body Page::getName {} {
 	return [$parent tab cget $index -text]
 }
@@ -388,6 +394,8 @@ itcl::body Page::AssignSpectrum {id} {
 		if {$type == 1} {Wave1D  $objectname $spectk(spectrum)}
 		if {$type == 2} {Wave2D  $objectname $spectk(spectrum)}
 	}
+	puts "$spectk(spectrum)"
+	puts "$objectname"
 # assign wave with contents of spectrum
 	$objectname Assign $spectk(spectrum)
 # create ROI for gates (if any)
@@ -396,6 +404,7 @@ itcl::body Page::AssignSpectrum {id} {
 	AssignDisplay $id $type
 # assign wave to display
 	$Display($id) AssignWave $objectname
+	puts "$Display($id)"
 # update ROI displays
 	$Display($id) UpdateROIs
 # set binding to select

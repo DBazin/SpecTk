@@ -134,6 +134,13 @@ itcl::class Display1D {
 	public method Print {w h}
 	public method PostScript {l}
 	public method CreateGraph {}
+	public method getWave {}
+}
+
+itcl::body Display1D::getWave {} {
+    if {[info exists waves]} {
+        return $waves
+    }
 }
 
 itcl::body Display1D::CreateGraph {} {

@@ -516,6 +516,7 @@ proc ROIDialogPostScript {} {
 }
 
 proc printResults {} {
+
 	global spectk
 	set tab [$spectk(pages) id select]
 	if {[string equal $tab ""]} {return}
@@ -524,7 +525,10 @@ proc printResults {} {
 	set rows [$page GetMember rows]
 	set cols [$page GetMember columns]
 	set w $spectk(drawer).pages.roi.history
-	set fName RoiValues.csv
+
+	set fName [tk_getSaveFile -defaultextension ".csv" -filetypes {{"CSV Files" .csv} {"All Files" *}}]
+	if {$fName eq ""} {return}
+
 	set f [open $fName w]
 	puts $f "ROI,Sum,Ratio,<X>,<Y>,FWHM1,FWHM2"
 	for {set ir 0} {$ir < $rows} {incr ir} {

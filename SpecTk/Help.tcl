@@ -294,6 +294,7 @@ proc EnterHelp {w} {
 proc DisplayAbout {} {
 	toplevel .about
 	wm title .about "About SpecTk"
+
 	text .about.text -background white -width 40 -height 16
 	pack .about.text -expand 1 -fill both
 	button .about.dismiss -text Dismiss -command "destroy .about"
@@ -302,7 +303,7 @@ proc DisplayAbout {} {
 	.about.text tag configure normal -font "Helvetica -12" -justify center
 	.about.text tag configure green -foreground darkgreen
 	.about.text insert end "SpecTk\n" "big green"
-	.about.text insert end "version 1.4.3c\n" "normal green"
+	.about.text insert end "version 1.5.0\n" "normal green"
 	.about.text insert end "01/29/2024\n\n" "normal green"
 	.about.text insert end "A displayer for SpecTcl\n" "normal"
 	.about.text insert end "\A9 NSCL/MSU 2004\n" "normal"

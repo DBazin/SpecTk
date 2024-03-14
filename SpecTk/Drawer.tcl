@@ -85,7 +85,7 @@ proc FocusDrawer {} {
 }
 
 proc DestroyTopLevel {} {
-	global spectk
+	global spectk	
 	if {![winfo exist $spectk(toplevel)]} {destroy $spectk(drawer)}
 }
 
