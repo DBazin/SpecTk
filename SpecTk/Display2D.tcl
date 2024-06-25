@@ -220,6 +220,7 @@ itcl::body Display2D::UpdateScale {} {
 }
 
 itcl::body Display2D::BindSelect {} {
+
 	if {![winfo exist $graph]} {return}
 	bind $graph <ButtonPress-1> "$page SelectDisplay $id 1"
 	bind $graph <Shift-ButtonPress-1> "$page SelectDisplay $id 0"

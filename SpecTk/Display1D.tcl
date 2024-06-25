@@ -262,7 +262,7 @@ itcl::body Display1D::UpdateDisplay {} {
 	if {$log} {
 		$waves OffZero
 		SetLog
-}
+	}
 	if {!$log} {SetLin}
 	if {$xgrid || $ygrid} {$graph grid on} else {$graph grid off}
 	if {$xgrid} {$graph grid configure -mapx x} else {$graph grid configure -mapx ""}
@@ -809,6 +809,7 @@ itcl::body Display1D::EditClick {xscreen yscreen mode} {
 }
 
 itcl::body Display1D::BindSelect {} {
+
 	if {![winfo exist $graph]} {return}
 	bind $graph <ButtonPress-1> "$page SelectDisplay $id 1"
 	bind $graph <Shift-ButtonPress-1> "$page SelectDisplay $id 0"
@@ -905,6 +906,7 @@ itcl::body Display1D::AssignWave {w} {
 	Update
 	Resize
 }
+
 
 itcl::body Display1D::AppendWave {w} {
 # just create a new element with the wave

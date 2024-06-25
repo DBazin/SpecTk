@@ -223,6 +223,7 @@ proc ClientSpectrum {args} {
 		}
 		UpdateAssignDialog
 		after 10
+		pack forget $spectk(status).icon
 		update
 		return
 	}

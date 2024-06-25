@@ -263,7 +263,6 @@ proc GDA_1D {id} {
 
 proc GDA_2D {id} {
 	global spectk
-	puts "GDA_2D, $id"
 	set tab [$spectk(pages) id select]
 	if {[string equal $tab ""]} {return}
 	set frame [$spectk(pages) tab cget $tab -window]

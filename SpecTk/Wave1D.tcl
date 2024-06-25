@@ -193,7 +193,27 @@ itcl::body Wave1D::SetVector {} {
 			if {[string equal $datatype long]} {set datalist [lreplace $datalist $lind $lind [expr $neg+4294967296]]}
 			set lind [lsearch -start $lind $datalist -*]
 		}
-		for {set i 0} {$i < [expr $nchan-1]} {incr i} {$this.data index [lindex $chanlist $i] [lindex $datalist $i]}
+		set chanlist [lmap i $chanlist {expr {$i - 1}}]
+		set filteredChanlist {}
+		set filteredDatalist {}
+
+		for {set i 0} {$i < [llength $chanlist]} {incr i} {
+    			set channel [lindex $chanlist $i]
+    			set data [lindex $datalist $i]
+    
+    			if {$channel >= 0 && $channel <= $bins} {
+        			lappend filteredChanlist $channel
+        			lappend filteredDatalist $data
+    			}
+		}
+
+		set chanlist $filteredChanlist
+		set datalist $filteredDatalist
+
+		#puts " channels: $chanlist"
+		#puts " data: $datalist"
+
+		for {set i 0} {$i < [expr $nchan]} {incr i} {$this.data index [lindex $chanlist $i] [lindex $datalist $i]}
 	}
 }
 

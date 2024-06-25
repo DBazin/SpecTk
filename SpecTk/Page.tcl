@@ -92,6 +92,25 @@ itcl::class Page {
 	public method disableTab {}
 	public method enableTab {}
 	public method getNum {}
+	public method getRow {} 
+	public method getColumn {}
+	public method getDisplay {}
+}
+
+itcl::body Page::getDisplay {} {
+	set displays []
+	foreach i [array names Display] {
+		lappend displays $i $Display($i)
+	}
+	return $displays
+}
+
+itcl::body Page::getColumn {} {
+	return $columns
+}
+
+itcl::body Page::getRow {} {
+	return $rows
 }
 
 itcl::body Page::getNum {} {
@@ -184,12 +203,25 @@ itcl::body Page::Update {} {
 
 itcl::body Page::Unbind {} {
 	set currentBinding None
+	set cursorLeftPtrConfigured 0
+
 	for {set ir 0} {$ir < $rows} {incr ir} {
 		for {set ic 0} {$ic < $columns} {incr ic} {
 			set id [format "R%dC%d" $ir $ic]
-			foreach b [bind $display($id)] {bind $display($id) $b ""}
-			if {[info exist Display($id)]} {$Display($id) Unbind}
-			$display($id) configure -cursor left_ptr
+
+			set bindList [bind $display($id)]
+			if {[llength $bindList] > 0} {
+				foreach b $bindList {bind $display($id) $b ""}
+			}
+			
+			if {!$cursorLeftPtrConfigured} {
+				$display($id) configure -cursor left_ptr
+				set cursorLeftPtrConfigured 1
+			}
+
+			if {[info exists Display($id)]} {
+				$Display($id) Unbind
+			}
 		}
 	}
 }
@@ -197,20 +229,28 @@ itcl::body Page::Unbind {} {
 itcl::body Page::BindSelect {} {
 	Unbind
 	set currentBinding BindSelect
+
 	for {set ir 0} {$ir < $rows} {incr ir} {
 		for {set ic 0} {$ic < $columns} {incr ic} {
 			set id [format "R%dC%d" $ir $ic]
+
 			bind $display($id) <ButtonPress-1> "$this SelectDisplay $id 1"
 			bind $display($id) <Shift-ButtonPress-1> "$this SelectDisplay $id 0"
+			
 			$display($id) configure -cursor arrow
-			if {[info exist Display($id)]} {
-				$Display($id) Unbind
-				$Display($id) BindSelect	
+
+			if {[info exists Display($id)]} {
+				$Display($id) BindSelect
 			}
 		}
 	}
-	foreach d $selected {SelectDisplay $d 0}
+
+	foreach d $selected {
+		SelectDisplay $d 0
+	}
 }
+
+
 
 itcl::body Page::SelectDisplay {id new} {
 	global spectk
@@ -380,6 +420,7 @@ itcl::body Page::MenuAssignSpectrum {id w} {
 
 itcl::body Page::AssignSpectrum {id} {
 	global spectk
+
 	if {[string equal $spectk(spectrum) ""]} {return}
 # find type of spectrum
 	set type [lindex [spectrum -list $spectk(spectrum)] 2]
@@ -394,8 +435,6 @@ itcl::body Page::AssignSpectrum {id} {
 		if {$type == 1} {Wave1D  $objectname $spectk(spectrum)}
 		if {$type == 2} {Wave2D  $objectname $spectk(spectrum)}
 	}
-	puts "$spectk(spectrum)"
-	puts "$objectname"
 # assign wave with contents of spectrum
 	$objectname Assign $spectk(spectrum)
 # create ROI for gates (if any)
@@ -404,7 +443,6 @@ itcl::body Page::AssignSpectrum {id} {
 	AssignDisplay $id $type
 # assign wave to display
 	$Display($id) AssignWave $objectname
-	puts "$Display($id)"
 # update ROI displays
 	$Display($id) UpdateROIs
 # set binding to select
@@ -555,13 +593,10 @@ itcl::body Page::Write {file} {
 
 itcl::body Page::Read {} {
 	global spectk
-	foreach d [array names Display] {
-		if {[llength [$Display($d) GetMember waves]] == 0} {
-#			itcl::delete object $Display($d)
-#			unset Display($d)
-		}
-	}
+	set startTime [clock seconds]
+
 	$currentBinding
+
 	foreach id $selected {SelectDisplay $id 0}
 	Resize
 }

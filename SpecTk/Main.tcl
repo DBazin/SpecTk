@@ -3,6 +3,8 @@
 
 package require BLT
 package require Itcl
+package require Tk
+package require Thread
 
 if {![string equal [itcl::find classes Fit] ""]} {itcl::delete class Fit}
 if {![string equal [itcl::find classes Page] ""]} {itcl::delete class Page}
@@ -42,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.5.1 Beta"
+	set spectk(version) "1.6.4"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -171,6 +173,7 @@ proc SetupFonts {} {
 }	
 
 proc SetupMenuBar {} {
+	package require tooltip
 	global spectk SpecTkHome
 	
 # SpecTk menu
@@ -204,6 +207,11 @@ proc SetupMenuBar {} {
 	bind $spectk(toplevel) <Control-o> "LoadConfiguration \"\""
 	$w add command -label Append... -command "AppendConfiguration \"\"" -accelerator "Ctrl-A"
 	bind $spectk(toplevel) <Control-a> "AppendConfiguration \"\""
+	menu $w.xamine -tearoff 0
+	$w.xamine add command -label "Import" -command xImport
+	$w.xamine add command -label "Export" -command xExport
+	$w.xamine add command -label "Export All" -command xExportAll
+	$w add cascade -label "Xamine" -menu $w.xamine
 	menu $w.recent -tearoff 0
 	if {[file exist SpecTkRecentFiles.tcl]} {source SpecTkRecentFiles.tcl}
 	$w add cascade -label "Open Recent" -menu $w.recent
@@ -222,17 +230,21 @@ proc SetupMenuBar {} {
 	set w $spectk(menubar).tool
 	menu $w -tearoff 0
 	menu $w.tabcontrol -tearoff 0
+	menu $w.remove -tearoff 0
 	$w.tabcontrol add command -label "Reorder" -command initReorder
 	$w.tabcontrol add command -label "Alphabetical" -command alphabeticalTab
 	$w add cascade -label "Tab Control" -menu $w.tabcontrol
+	$w.remove add command -label "Remove Appended" -command removeAppended
+	$w.remove add command -label "Remove ROI" -command clearRoi
+	$w.remove add command -label "Purge" -command purge
+	$w add cascade -label "Remove Tools" -menu $w.remove
 	$w add command -label "Unstick" -command {
 		ToolCommand BindDisplay
 		update
 		}
-	$w add command -label "Remove Appended" -command removeAppended
-	$w add command -label "Purge" -command purge
 	$w add command -label "Refresh" -command reload
 	$w add checkbutton -label "Safe Mode" -variable safeMode -onvalue 1 -offvalue 0
+	$w add command -label "Help" -command showAbout
 	$spectk(menubar) insert end cascade -label Tool -menu $w 
 
 # Options menu
@@ -899,7 +911,7 @@ proc NewConfiguration {} {
 proc LoadConfiguration {config} {
 	global spectk
 	global List
-	global safeMode 
+	global safeMode
 
 	$List enable+
 	if {![info exist spectk(loaddir)]} {set spectk(loaddir) ""}
@@ -907,39 +919,51 @@ proc LoadConfiguration {config} {
 		set config [tk_getOpenFile -title "Select a SpecTk configuration file" \
 		-filetypes {{"SpecTk Configuration File" {.spk}}} \
 		-initialdir $spectk(loaddir)]
+		set fileDir $config
 	}
 	if {[string equal $config ""]} {return}
 	set f [lindex [split $config /] end]
 	if {$safeMode == 1} {
-		puts "working"
 		filter $f
 	}
 	set spectk(loaddir) [string trimright $config $f]
 	DeleteAllObjects
+
 # Keep drawer state
 	set drawer $spectk(draweropen)
 	source $config
 	set spectk(draweropen) $drawer
+
 # Update spectrum list
 	set spectk(spectrumList) ""
 	foreach s [spectrum -list] {
 		set name [lindex $s 1]
 		lappend spectk(spectrumList) $name
 	}
+
 # Process all objects
 
-	set fr [open $spectk(configName) r]
-	$List readList $fr
-	set pages [$List getPages]
+    	set fr ""
+    	if {[catch {set fr [open $spectk(configName) r]}]} {
+        	if {[string length $fileDir] > 0 && [file exists $fileDir]} {
+            		set fr [open $fileDir r]
+        	} else {
+            		return
+        	}
+   	}
 
-	foreach w [itcl::find object -isa Wave1D] {$w Read}
+	$List readList $fr
+
+    	foreach w [itcl::find object -isa Wave1D] {$w Read}
 	foreach w [itcl::find object -isa Wave2D] {$w Read}
 	foreach d [itcl::find object -isa Display1D] {$d Read}
 	foreach d [itcl::find object -isa Display2D] {$d Read}
 	foreach r [itcl::find object -isa ROI] {$r Read}
+
 	foreach p [$List getPages] {$p Read}
 
 	UpdateAll
+
 	if {[info exist spectk(geometry)] && $spectk(resizeWindow)} {wm geometry . $spectk(geometry)}
 	EnableHelp
 	StoreRecentFile $config
@@ -1357,11 +1381,11 @@ proc purge {} {
 	set roiList {}
 
         foreach d [itcl::find object -isa Display1D] {
-            lappend waveList [$d getWave]
+		lappend waveList [$d getWave]
         }
 
         foreach d [itcl::find object -isa Display2D] {
-            lappend waveList [$d getWave]
+		lappend waveList [$d getWave]
         }
 
 
@@ -1473,6 +1497,151 @@ proc grid2 {} {
 			}
 		}
 	}
+}
+
+proc clearRoi {} {
+    foreach roi [itcl::find object -class ROI] {
+        itcl::delete object $roi
+    }
+}
+
+proc xExport {} {
+	global spectk
+
+	set fName [tk_getSaveFile -defaultextension ".win" -filetypes {{"WIN Files" .win} {"All Files" *}}]
+
+	set objects [itcl::find objects]
+	set tab [$spectk(pages) id select]
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	set rows [$page getRow]
+	set columns [$page getColumn]
+	set displays [$page getDisplay]
+
+	set file [open $fName "w"]
+
+	puts $file "Geometry $rows,$columns"
+	puts $file "# $fName Written by @(#)dispwind.cc\t2.2 1/28/94  at [clock format [clock seconds] -format "%a %b %d %H:%M:%S %Y"]"
+	puts $file ""
+	
+        foreach {index value} $displays {
+		set wave [$value getWave]
+		set waveName [$wave getName]
+
+		regsub -all {R(\d+)C(\d+)} $index {\2,\1} formattedIndex
+
+		puts $file "Window  $formattedIndex,\"$waveName\""
+		puts $file "   SCALE Manual 256"
+        	puts $file "   MAPPED 1"
+
+        	if {[$wave isa Wave2D]} {
+            		puts $file "   Rendition Color"
+        	}
+
+		puts $file "Endwindow"
+
+        }
+	close $file
+}
+
+proc xExportAll {} {
+    global spectk
+    global List
+
+    set saveDirectory $spectk(savedir)
+
+    set pages [$List getPages]
+
+    foreach page $pages {
+        set rows [$page getRow]
+        set columns [$page getColumn]
+        set displays [$page getDisplay]
+
+        set fName [file join $saveDirectory "${page}.win"]
+
+        set file [open $fName "w"]
+        puts $file "Geometry $rows,$columns"
+        puts $file "# $fName Written by @(#)dispwind.cc\t2.2 1/28/94  at [clock format [clock seconds] -format "%a %b %d %H:%M:%S %Y"]"
+        puts $file ""
+
+        foreach {index value} $displays {
+            set wave [$value getWave]
+            set waveName [$wave getName]
+
+            regsub -all {R(\d+)C(\d+)} $index {\2,\1} formattedIndex
+            puts $file "Window  $formattedIndex,\"$waveName\""
+            puts $file "   SCALE Manual 256"
+            puts $file "   MAPPED 1"
+
+            if {[$wave isa Wave2D]} {
+                puts $file "   Rendition Color"
+            }
+
+            puts $file "Endwindow"
+        }
+        close $file
+    }
+}
+
+proc xImport {} {
+    	global spectk
+
+    	set fName [tk_getOpenFile -filetypes {{"WIN Files" .win} {"All Files" *}}]
+
+    	if {$fName eq ""} {
+        	return
+    	}
+
+    	set file [open $fName "r"]
+
+    	set fileContents [read $file]
+
+    	if {[regexp {Geometry\s+(\d+),(\d+)} $fileContents match rows cols]} {
+        	set spectk(pageRows) $rows
+        	set spectk(pageColumns) $cols
+    	}
+
+    	set filename [file tail $fName]
+    	set baseName [file rootname $filename]
+
+    	set spectk(pageName) $baseName
+
+	CreateNewPage
+
+	foreach line [split $fileContents "\n"] {
+        	if {[regexp {Window\s+(\d+),(\d+),"([^"]+)"} $line match row col wave]} {
+            		set display "R${col}C${row}"
+			set spectk(spectrum) $wave
+			
+			$spectk(pageName) AssignSpectrum $display
+        	}
+    	}
+}
+
+proc showAbout {} {
+    	toplevel .help
+    	wm title .help "About Tool Menu"
+    	wm geometry .help "500x300"
+
+    	text .help.text -background white -width 40 -height 16
+    	pack .help.text -expand 1 -fill both
+    	button .help.dismiss -text Dismiss -command "destroy .help"
+    	pack .help.dismiss
+    	.help.text tag configure big -font "Times -24" -justify center
+    	.help.text tag configure normal -font "Helvetica -12" -justify center
+    	.help.text tag configure green -foreground darkgreen
+    	.help.text insert end "Tool Menu Help\n" "big green"
+
+    	.help.text insert end "Menu item descriptions:\n" "big black"
+    	.help.text insert end "Reorder: Reorder the tabs\n" "normal"
+    	.help.text insert end "Alphabetical: Arrange tabs in alphabetical order\n" "normal"
+    	.help.text insert end "Unstick: Unstick the button to the left of the display\n" "normal"
+    	.help.text insert end "Remove Appended: Remove appended items\n" "normal"
+    	.help.text insert end "Remove ROI: Removes all of the ROI Objects\n" "normal"
+    	.help.text insert end "Purge: Purge all unused objects and data\n" "normal"
+    	.help.text insert end "Refresh: Refresh the displays\n" "normal"
+    	.help.text insert end "Safe Mode: Toggle safe mode on or off which checks for empty ROIs and removes them\n" "normal"
+    	.help.text configure -state disabled
 }
 
 SetupSpecTk

@@ -204,6 +204,10 @@ itcl::body Wave2D::SetVectors {} {
 			if {[string equal $datatype long]} {set data [lreplace $data $lind $lind [expr $neg+4294967296]]}
 			set lind [lsearch -start [expr $lind+1] $data -*]
 		}
+
+		set ychan [lmap y $ychan {expr {$y - 1}}]
+		set xchan [lmap x $xchan {expr {$x - 1}}]
+
 		$this.x set $xchan
 		$this.y set $ychan
 		$this.z set $data
