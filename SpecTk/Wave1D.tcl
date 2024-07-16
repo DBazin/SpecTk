@@ -100,60 +100,61 @@ itcl::body Wave1D::Assign {s} {
 }
 
 itcl::body Wave1D::Update {withdata} {
-	set l [spectrum -list $spectrum]
-	set type [lindex $l 2]
-	set parameter [lindex $l 3]
-	set re [lindex [lindex $l 4] 0]
-	set low [lindex $re 0]
-	set high [lindex $re 1]
-	set bins [lindex $re 2]
-	set datatype [lindex $l 5]
-# 1D spectrum case
-	if {$type == 1} {
-# Get unit from parameter histogrammed in spectrum
-		set l [parameter -list $parameter]
-		set r [lindex $l 3]
-		set unit [lindex $r 2]
-	}
-# Gamma 1D spectrum case
-	if {[string equal $type g1]} {
-		set p [lindex $parameter 0]
-		set l [parameter -list $p]
-		set r [lindex $l 3]
-		set unit [lindex $r 2]
-		set parameter "[string range $p 0 [string last . $p]]xx"
-	}
-# Bitmask spectrum case
-	if {[string equal $type b]} {
-# Little bug in bitmask spectra sets the wrong high number
-		set high [expr [lindex $re 1]+1]
-		set unit bit
-	}
-# Fill vectors with data
-#	$this.data length $bins
-	set increment [expr 1.0*($high - $low) / $bins]
-	set xlist ""
-	for {set i 0} {$i <= $bins} {incr i} {
-		lappend xlist [expr $low + $i * $increment]
-#		set $this.data($i) [channel -get $spectrum $i]
-	}
-	if {$withdata} {
-		SetVector
-		$this.error set [blt::vector expr sqrt($this.data)]
-	}
-# Get gate condition on spectrum
-	set l [lindex [apply -list $spectrum] 0]
-	set r [lindex $l 1]
-	set gate [lindex $r 0]
-	if {[string equal [lindex $r 2] T]} {set gate True}
-	if {[string equal [lindex $r 2] F]} {set gate False}
-# Create ROI if necessary
-	CreateROI
-# Calculate all ROIs
-	if {$withdata} {
-		CalculateAll
-		foreach roi [FindROIs] {CalculateROI $roi}
-	}
+    set spectrumList [spectrum -list $spectrum]
+    set type [lindex $spectrumList 2]
+    set parameter [lindex $spectrumList 3]
+    set re [lindex [lindex $spectrumList 4] 0]
+    set low [lindex $re 0]
+    set high [lindex $re 1]
+    set bins [lindex $re 2]
+    set datatype [lindex $spectrumList 5]
+
+    # Determine unit based on spectrum type
+    switch $type {
+        1 {
+            set parameterList [parameter -list $parameter]
+            set unit [lindex [lindex $parameterList 3] 2]
+        }
+        g1 {
+            set p [lindex $parameter 0]
+            set parameterList [parameter -list $p]
+            set unit [lindex [lindex $parameterList 3] 2]
+            set parameter "[string range $p 0 [string last . $p]]xx"
+        }
+        b {
+            set high [expr {$high + 1}]
+            set unit bit
+        }
+    }
+
+    # Fill vectors with data
+    set increment [expr {1.0 * ($high - $low) / $bins}]
+    set xlist {}
+    for {set i 0} {$i <= $bins} {incr i} {
+        lappend xlist [expr {$low + $i * $increment}]
+    }
+
+    if {$withdata} {
+        SetVector
+        $this.error set [blt::vector expr sqrt($this.data)]
+    }
+
+    # Get gate condition on spectrum
+    set gateList [lindex [apply -list $spectrum] 0]
+    set gate [lindex [lindex $gateList 1] 0]
+    set gateStatus [lindex [lindex $gateList 1] 2]
+    set gate [expr {$gateStatus eq "T"} ? "True" : "False"]
+
+    # Create ROI if necessary
+    CreateROI
+
+    # Calculate all ROIs if withdata is true
+    if {$withdata} {
+        CalculateAll
+        foreach roi [FindROIs] {
+            CalculateROI $roi
+        }
+    }
 }
 
 itcl::body Wave1D::SetVector {} {

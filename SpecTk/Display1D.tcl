@@ -946,17 +946,19 @@ itcl::body Display1D::RemoveWave {w} {
 }
 
 itcl::body Display1D::Update {} {
-	foreach w $waves {
-# if wave already exists, just update it
-		if {[lsearch [itcl::find object -isa Wave1D] $w] != -1} {
-			$w Update 1
-			if {[winfo exist $graph.hide]} {UpdateROIResults $w}
-		}
-	}
-	UpdateDisplay
-	UpdateROIs
-	UpdateROIDialog
-	UpdateExpandDialog
+    set waveObjects [itcl::find object -isa Wave1D]
+    foreach w $waves {
+        if {[lsearch -exact $waveObjects $w] != -1} {
+            $w Update 1
+            if {[winfo exists $graph.hide]} {
+                UpdateROIResults $w
+            }
+        }
+    }
+    UpdateDisplay
+    UpdateROIs
+    UpdateROIDialog
+    UpdateExpandDialog
 }
 
 itcl::body Display1D::BuildROIResults {} {

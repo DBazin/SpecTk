@@ -85,73 +85,85 @@ itcl::body Wave2D::Assign {s} {
 }
 
 itcl::body Wave2D::Update {withdata} {
-	set l [spectrum -list $spectrum]
-	set type [lindex $l 2]
-	set parameter [lindex $l 3]
-	set rx [lindex [lindex $l 4] 0]
-	set ry [lindex [lindex $l 4] 1]
-	set datatype [lindex $l 5]
-# Get units from parameters histogrammed in spectrum
-# 2D spectrum case
-	if {$type == 2} {
-		set low [list [lindex $rx 0] [lindex $ry 0]]
-		set high [list [lindex $rx 1] [lindex $ry 1]]
-		set bins [list [lindex $rx 2] [lindex $ry 2]]
-		set increment [list [expr 1.0*([lindex $high 0]-[lindex $low 0])/[lindex $bins 0]] \
-		[expr 1.0*([lindex $high 1]-[lindex $low 1])/[lindex $bins 1]]]
-		set lx [parameter -list [lindex $parameter 0]]
-		set ly [parameter -list [lindex $parameter 1]]
-		set rx [lindex $lx 3]
-		set ry [lindex $ly 3]
-		set unit [list [lindex $rx 2] [lindex $ry 2]]
-	}
-# Summary spectrum case
-	if {[string equal $type s]} {
-		set pbegin [lindex $parameter 0]
-		set pend [lindex $parameter end]
-		set xlow [string range $pbegin [expr [string last . $pbegin]+1] end]
-		set xhigh [string range $pend [expr [string last . $pend]+1] end]
-		set low [list $xlow [lindex $rx 0]]
-		set high [list [expr $xhigh+1] [lindex $rx 1]]
-		set bins [list [llength $parameter] [lindex $rx 2]]
-		set increment [list [expr 1.0*([lindex $high 0]-[lindex $low 0])/[lindex $bins 0]] \
-		[expr 1.0*([lindex $high 1]-[lindex $low 1])/[lindex $bins 1]]]
-		set lx [parameter -list [lindex $parameter 0]]
-		set rx [lindex $lx 3]
-		set unit [list index [lindex $rx 2]]
-		set parameter "xx [string range $pbegin 0 [string last . $pbegin]]xx"
-	}
-# Gamma 2D spectrum case
-	if {[string equal $type g2]} {
-		set low [list [lindex $rx 0] [lindex $ry 0]]
-		set high [list [lindex $rx 1] [lindex $ry 1]]
-		set bins [list [lindex $rx 2] [lindex $ry 2]]
-		set increment [list [expr 1.0*([lindex $high 0]-[lindex $low 0])/[lindex $bins 0]] \
-		[expr 1.0*([lindex $high 1]-[lindex $low 1])/[lindex $bins 1]]]
-		set p [lindex $parameter 0]
-		set l [parameter -list $p]
-		set r [lindex $l 3]
-		set unit [list [lindex $r 2] [lindex $r 2]]
-		set par "[string range $p 0 [string last . $p]]xx"
-		set parameter [list $par $par]
-	}
-# Fill vectors with data
-	if {$withdata} {
-		SetVectors
-	}
-# Get gate condition on spectrum
-	set l [lindex [apply -list $spectrum] 0]
-	set r [lindex $l 1]
-	set gate [lindex $r 0]
-	if {[string equal [lindex $r 2] T]} {set gate True}
-	if {[string equal [lindex $r 2] F]} {set gate False}
-# Create ROI is necessary
-	CreateROI
-# Calculate all ROIs
-	if {$withdata} {
-		CalculateAll
-		foreach roi [FindROIs] {CalculateROI $roi}
-	}
+    set l [spectrum -list $spectrum]
+    set type [lindex $l 2]
+    set parameter [lindex $l 3]
+    set rx [lindex [lindex $l 4] 0]
+    set ry [lindex [lindex $l 4] 1]
+    set datatype [lindex $l 5]
+
+    # Initialize variables
+    set low {}
+    set high {}
+    set bins {}
+    set increment {}
+    set unit {}
+    set par ""
+
+    # Handle different spectrum types
+    switch $type {
+        2 {
+            set low [list [lindex $rx 0] [lindex $ry 0]]
+            set high [list [lindex $rx 1] [lindex $ry 1]]
+            set bins [list [lindex $rx 2] [lindex $ry 2]]
+            set increment [list [expr 1.0 * ([lindex $high 0] - [lindex $low 0]) / [lindex $bins 0]] \
+                                 [expr 1.0 * ([lindex $high 1] - [lindex $low 1]) / [lindex $bins 1]]]
+            set lx [parameter -list [lindex $parameter 0]]
+            set ly [parameter -list [lindex $parameter 1]]
+            set unit [list [lindex [lindex $lx 3] 2] [lindex [lindex $ly 3] 2]]
+        }
+        s {
+            set pbegin [lindex $parameter 0]
+            set pend [lindex $parameter end]
+            set xlow [string range $pbegin [expr [string last . $pbegin] + 1] end]
+            set xhigh [string range $pend [expr [string last . $pend] + 1] end]
+            set low [list $xlow [lindex $rx 0]]
+            set high [list [expr $xhigh + 1] [lindex $rx 1]]
+            set bins [list [llength $parameter] [lindex $rx 2]]
+            set increment [list [expr 1.0 * ([lindex $high 0] - [lindex $low 0]) / [lindex $bins 0]] \
+                                 [expr 1.0 * ([lindex $high 1] - [lindex $low 1]) / [lindex $bins 1]]]
+            set lx [parameter -list [lindex $parameter 0]]
+            set unit [list index [lindex [lindex $lx 3] 2]]
+            set par "xx [string range $pbegin 0 [string last . $pbegin]]xx"
+            set parameter [list $par $par]
+        }
+        g2 {
+            set low [list [lindex $rx 0] [lindex $ry 0]]
+            set high [list [lindex $rx 1] [lindex $ry 1]]
+            set bins [list [lindex $rx 2] [lindex $ry 2]]
+            set increment [list [expr 1.0 * ([lindex $high 0] - [lindex $low 0]) / [lindex $bins 0]] \
+                                 [expr 1.0 * ([lindex $high 1] - [lindex $low 1]) / [lindex $bins 1]]]
+            set p [lindex $parameter 0]
+            set l [parameter -list $p]
+            set r [lindex $l 3]
+            set unit [list [lindex $r 2] [lindex $r 2]]
+            set par "[string range $p 0 [string last . $p]]xx"
+            set parameter [list $par $par]
+        }
+    }
+
+    # Fill vectors with data if withdata is true
+    if {$withdata} {
+        SetVectors
+    }
+
+    # Get gate condition on spectrum
+    set l [lindex [apply -list $spectrum] 0]
+    set r [lindex $l 1]
+    set gate [lindex $r 0]
+    set gateStatus [lindex $r 2]
+    set gate [expr {$gateStatus eq "T"} ? "True" : "False"]
+
+    # Create ROI if necessary
+    CreateROI
+
+    # Calculate all ROIs if withdata is true
+    if {$withdata} {
+        CalculateAll
+        foreach roi [FindROIs] {
+            CalculateROI $roi
+        }
+    }
 }
 
 itcl::body Wave2D::SetVectors {} {

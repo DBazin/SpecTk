@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.6.4"
+	set spectk(version) "1.6.5"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -755,6 +755,7 @@ proc AssignAll {} {
 }
 
 proc UpdateAll {} {
+
 	global spectk
 	DisableUpdate
 	foreach tab [$spectk(pages) tab names] {
@@ -763,10 +764,12 @@ proc UpdateAll {} {
 		$page Update
 	}
 	EnableUpdate
+
 #	if {$spectk(autoUpdate)} {
 #		set spectk(autoCancel) [after [expr $spectk(autoPeriod)*1000] UpdateAllSpectra]
 #	}
 }
+
 
 proc UpdatePage {} {
 	global spectk
