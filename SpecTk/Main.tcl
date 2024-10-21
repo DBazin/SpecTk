@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.6.5"
+	set spectk(version) "1.6.10"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -238,10 +238,10 @@ proc SetupMenuBar {} {
 	$w.remove add command -label "Remove ROI" -command clearRoi
 	$w.remove add command -label "Purge" -command purge
 	$w add cascade -label "Remove Tools" -menu $w.remove
-	$w add command -label "Unstick" -command {
-		ToolCommand BindDisplay
-		update
-		}
+#	$w add command -label "Unstick" -command {
+#		ToolCommand BindDisplay
+#		update
+#		}
 	$w add command -label "Refresh" -command reload
 	$w add checkbutton -label "Safe Mode" -variable safeMode -onvalue 1 -offvalue 0
 	$w add command -label "Help" -command showAbout
@@ -453,12 +453,7 @@ proc SetupButtons {} {
 	button $w.updatepage -text "Update Page" -font "generalbold" -command UpdatePage
 	button $w.updateselected -text "Update Selected" -font "generalbold" -command UpdateSelected
 	button $w.updateall -text "Update All" -font "generalbold" -command UpdateAll
-#	frame $w.autoupdate
-#		checkbutton $w.autoupdate.toggle -text Auto -font "general" -command AutoUpdateSpectra \
-		-variable spectk(autoUpdate)
-#		entry $w.autoupdate.value -textvariable spectk(autoPeriod) -width 4 -background white
-#		label $w.autoupdate.s -text s -font "general"
-#	pack $w.autoupdate.toggle $w.autoupdate.value $w.autoupdate.s -side left
+
 	frame $w.ll
 		button $w.ll.log -text Log  -font "general" -command "SetScale SetLog"
 		button $w.ll.lin -text Lin  -font "general" -command "SetScale SetLin"
@@ -502,6 +497,23 @@ proc SetupButtons {} {
 	
 #	grid $w -column 2 -row 0 -sticky nse
 	pack $w -side right -expand 1 -fill y -anchor e -before $spectk(buttons).select
+
+# Auto Update Frame
+    	set w $spectk(buttons).autoupdate
+    	frame $w -borderwidth 2 -relief groove -width 120
+    	label $w.label_toggle -text "Auto on:" -font "general"
+    	checkbutton $w.toggle -font "general" -command AutoUpdateSpectra -variable spectk(autoUpdate)
+    	label $w.label_dropdown -text "Type:" -font "general"
+    	ttk::combobox $w.dropdown -values {Select Page All} -state readonly -textvariable spectk(autoOption) -width 5
+    	$w.dropdown set "Page"
+    	label $w.label_time -text "Time (s):" -font "general"
+    	entry $w.value -textvariable spectk(autoPeriod) -width 4 -background white
+    
+    	grid $w.label_toggle $w.toggle -sticky w -padx 2 -pady 2
+    	grid $w.label_dropdown $w.dropdown -sticky w -padx 2 -pady 2
+    	grid $w.label_time $w.value -sticky w -padx 2 -pady 2
+
+    	pack $w -side right -expand 0 -fill none -anchor e -padx 5 -pady 5
 }
 
 proc SetupInfo {} {
@@ -755,7 +767,7 @@ proc AssignAll {} {
 }
 
 proc UpdateAll {} {
-
+#	puts "Updating"
 	global spectk
 	DisableUpdate
 	foreach tab [$spectk(pages) tab names] {
@@ -764,10 +776,21 @@ proc UpdateAll {} {
 		$page Update
 	}
 	EnableUpdate
+}
 
-#	if {$spectk(autoUpdate)} {
-#		set spectk(autoCancel) [after [expr $spectk(autoPeriod)*1000] UpdateAllSpectra]
-#	}
+proc UpdateAll2 {} {
+	global spectk
+	#DisableUpdate
+	foreach tab [$spectk(pages) tab names] {
+		set frame [$spectk(pages) tab cget $tab -window]
+		set page [lindex [split $frame .] end]
+		$page Update
+	}
+	#EnableUpdate
+
+	if {$spectk(autoUpdate)} {
+		set spectk(autoCancel) [after [expr $spectk(autoPeriod)*1000] AutoUpdateSpectra]
+	}
 }
 
 
@@ -780,9 +803,22 @@ proc UpdatePage {} {
 	set page [lindex [split $frame .] end]
 	$page Update
 	EnableUpdate
-#	if {$spectk(autoUpdate)} {
-#		set spectk(autoCancel) [after [expr $spectk(autoPeriod)*1000] UpdatePage]
-#	}
+}
+
+proc UpdatePage2 {} {
+	global spectk
+	catch {
+	set tab [$spectk(pages) id select]
+	if {[string equal $tab ""]} {return}
+#	DisableUpdate
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	$page Update
+	}
+#	EnableUpdate
+	if {$spectk(autoUpdate)} {
+		set spectk(autoCancel) [after [expr $spectk(autoPeriod)*1000] AutoUpdateSpectra]
+	}
 }
 
 proc UpdateSelected {} {
@@ -801,13 +837,47 @@ proc UpdateSelected {} {
 	EnableUpdate
 }
 
+proc UpdateSelected2 {} {
+	global spectk
+	set objects [itcl::find objects]
+	set tab [$spectk(pages) id select]
+	if {[string equal $tab ""]} {return}
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	foreach id [$page GetMember selected] {
+		set display [format "%s%s" $page $id]
+		set index [lsearch $objects $display]
+		if {$index >= 0} {$display Update}
+	}
+	if {$spectk(autoUpdate)} {
+		set spectk(autoCancel) [after [expr $spectk(autoPeriod)*1000] AutoUpdateSpectra]
+	}
+
+}
+
 proc AutoUpdateSpectra {} {
 	global spectk
-	if {$spectk(autoUpdate)} {
-		set spectk(autoCancel) [after [expr $spectk(autoPeriod)*1000] UpdateAllSpectra]
-	} else {
-		after cancel $spectk(autoCancel)
-	}
+
+    	if {$spectk(autoUpdate)} {
+		set w $spectk(buttons).spectrum
+        	catch {$w.updateall configure -state disabled}
+        	catch {$w.updatepage configure -state disabled}
+        	catch {$w.updateselected configure -state disabled}
+        	if {$spectk(autoOption) eq "Page"} {
+            		set spectk(autoCancel) [after [expr $spectk(autoPeriod) * 1000] UpdatePage2]
+        	} elseif {$spectk(autoOption) eq "All"} {
+            		set spectk(autoCancel) [after [expr $spectk(autoPeriod) * 1000] UpdateAll2]
+        	} elseif {$spectk(autoOption) eq "Select"} {
+        		set spectk(autoCancel) [after [expr $spectk(autoPeriod) * 1000] UpdateSelected2]
+		}
+    	} else {
+        	set w $spectk(buttons).spectrum
+        	catch {$w.updateall configure -state normal}
+        	catch {$w.updatepage configure -state normal}
+        	catch {$w.updateselected configure -state normal}
+        	catch {EnableUpdate}
+        	catch {after cancel $spectk(autoCancel)}
+    	}
 }
 
 proc DisableUpdate {} {
@@ -1638,13 +1708,12 @@ proc showAbout {} {
     	.help.text insert end "Menu item descriptions:\n" "big black"
     	.help.text insert end "Reorder: Reorder the tabs\n" "normal"
     	.help.text insert end "Alphabetical: Arrange tabs in alphabetical order\n" "normal"
-    	.help.text insert end "Unstick: Unstick the button to the left of the display\n" "normal"
+#    	.help.text insert end "Unstick: Unstick the button to the left of the display\n" "normal"
     	.help.text insert end "Remove Appended: Remove appended items\n" "normal"
     	.help.text insert end "Remove ROI: Removes all of the ROI Objects\n" "normal"
     	.help.text insert end "Purge: Purge all unused objects and data\n" "normal"
     	.help.text insert end "Refresh: Refresh the displays\n" "normal"
-    	.help.text insert end "Safe Mode: Toggle safe mode on or off which checks for empty ROIs and removes them\n" "normal"
+    	.help.text insert end "Safe Mode: Toggle safe mode on or off which-\n checks for empty ROIs and removes them\n" "normal"
     	.help.text configure -state disabled
 }
-
 SetupSpecTk

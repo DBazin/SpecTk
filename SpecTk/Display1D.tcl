@@ -410,9 +410,9 @@ itcl::body Display1D::ZoomLeftClick {xscreen yscreen mode} {
 		$graph marker create text -name limit1 -coords [list $x $y] -text [format %.4g $x] \
 		-font "graphlabels" -rotate 90 -background ""
 		$graph marker configure value -anchor se
-		foreach w [winfo children $spectk(tools)] {
-			if {[string first zoom $w] == -1} {$w configure -state disable}
-		}
+#		foreach w [winfo children $spectk(tools)] {
+#			if {[string first zoom $w] == -1} {$w configure -state disable}
+#		}
 	}
 }
 

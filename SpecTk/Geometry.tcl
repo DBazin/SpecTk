@@ -99,6 +99,11 @@ proc SelectMagicButtons {w r c} {
 proc CreateNewPage {} {
 	global spectk
 	global List
+
+	set pName $spectk(pageName)
+	set lowerName [string tolower $pName]
+	set spectk(pageName) $lowerName
+
 # if the page already exists we need to find a new name for it
 	if {[lsearch [itcl::find objects -isa Page] $spectk(pageName)] != -1} {
 		set i 1
@@ -111,6 +116,10 @@ proc CreateNewPage {} {
 	$spectk(tools).select select
 	$spectk(tools).select invoke
 	$spectk(pageName) SelectDisplay R0C0 1
+
+	if {$pName ne $lowerName} {
+		$lowerName Modify $pName $spectk(pageRows) $spectk(pageColumns)
+        }
 }
 
 proc ModifyPage {} {

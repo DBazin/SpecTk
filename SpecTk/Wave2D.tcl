@@ -148,11 +148,11 @@ itcl::body Wave2D::Update {withdata} {
     }
 
     # Get gate condition on spectrum
-    set l [lindex [apply -list $spectrum] 0]
-    set r [lindex $l 1]
-    set gate [lindex $r 0]
-    set gateStatus [lindex $r 2]
-    set gate [expr {$gateStatus eq "T"} ? "True" : "False"]
+	set l [lindex [apply -list $spectrum] 0]
+	set r [lindex $l 1]
+	set gate [lindex $r 0]
+	if {[string equal [lindex $r 2] T]} {set gate True}
+	if {[string equal [lindex $r 2] F]} {set gate False}
 
     # Create ROI if necessary
     CreateROI
