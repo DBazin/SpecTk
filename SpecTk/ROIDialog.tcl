@@ -197,13 +197,13 @@ proc ROIDialogCalculateDisplay {display} {
 			$wave CalculateAll
 			set r [$wave GetMember calc(All)]
 			if {[$display isa Display1D]} {
-				$w.text insert end "ROI	Sum	Ratio	<X>	RMS\n" "blue"
+				$w.text insert end "ROI	Sum	Ratio	<X>	FWHM\n" "blue"
 				$w.text insert end "All" "red" "	[lindex $r 0]	[lindex $r 1]	[lindex $r 2]	[lindex $r 3]\n" "black"
 			}
 			if {[$display isa Display2D]} {
-				$w.text insert end "ROI	Sum	Ratio	<X/Y>	RMS\n" "blue"
+				$w.text insert end "ROI	Sum	Ratio	<X/Y>	FWHM\n" "blue"
 				$w.text insert end "All" "red" "	[lindex $r 0]	[lindex $r 1]	[lindex $r 2]	[lindex $r 4]\n" "black"
-				$w.text insert end "				[lindex $r 3]	[lindex $r 5]\n" "black"
+				$w.text insert end "			[lindex $r 3]	[lindex $r 5]\n" "black"
 			}
 			foreach roi [$wave FindROIs] {
 				$wave CalculateROI $roi
@@ -213,7 +213,7 @@ proc ROIDialogCalculateDisplay {display} {
 				}
 				if {[$display isa Display2D]} {
 					$w.text insert end "[$roi GetMember name]" "red" "	[lindex $r 0]	[lindex $r 1]	[lindex $r 2]	[lindex $r 4]\n" "black"
-					$w.text insert end "				[lindex $r 3]	[lindex $r 5]\n" "black"
+					$w.text insert end "			[lindex $r 3]	[lindex $r 5]\n" "black"
 				}
 			}
 			$w.text insert end "\n"
