@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.6.10"
+	set spectk(version) "1.7.0"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -738,14 +738,14 @@ proc AssignAll {} {
 		for {set ir 0} {$ir < [$page GetMember rows]} {incr ir} {
 			for {set ic 0} {$ic < [$page GetMember columns]} {incr ic} {
 				set disp [format "%sR%dC%d" $page $ir $ic]
-# if the display doesnÕt exists, there is nothing to display
+# if the display doesnÃ•t exists, there is nothing to display
 				if {[lsearch [itcl::find objects] $disp] == -1} {continue}
 # if the display exists and so does the graph, just update the display
 				if {[winfo exists [$disp GetMember graph]]} {
 					$disp Update
 					continue
 				}
-# if the display doesnÕt exist, check to see if the spectrum is in the spectrum list
+# if the display doesnÃ•t exist, check to see if the spectrum is in the spectrum list
 				set id [format "R%dC%d" $ir $ic]
 				set waves [$disp GetMember waves]
 				set i 0
