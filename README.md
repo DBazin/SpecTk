@@ -2,7 +2,7 @@
 ## SpecTk is a Tcl/Tk based displayed for the SpecTcl analysis program.<br>
 ## SpecTk 1.5.1 3/14/2024<br>
 ----------------------------------------------------------------------<br>
-[Documentation](https://docs.google.com/presentation/d/12J8pI4sbH5wrpuGGuTzrcTzPNWwcpbTEty48f6dmcsc/edit?usp=sharing)<br>
+[Documentation] (https://docs.google.com/presentation/d/12J8pI4sbH5wrpuGGuTzrcTzPNWwcpbTEty48f6dmcsc/edit?usp=sharing)<br>
 Added:<br>
 Grid Button<br>
 Refresh Tool<br>
