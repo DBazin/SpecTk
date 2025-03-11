@@ -12,6 +12,11 @@ itcl::class Wave2D {
 	private variable datatype
 	private variable gate
 	private variable calc
+	private variable xStd
+	private variable yStd
+	private variable cov
+	private variable thetaDeg
+
 	
 	constructor {theName} {
 		set name $theName
@@ -330,19 +335,36 @@ itcl::body Wave2D::CalculateROI {roi} {
 	set yinc [lindex $increment 1]
 	set xl [$roi GetMember xlimits]
 	set yl [$roi GetMember ylimits]
+
 	blt::vector create x y z
 	Wave2DInPolygon $xl $yl "$xlow $ylow $xinc $yinc" "$this.x $this.y $this.z" "x y z"
 	set sz [blt::vector expr sum(z)]
 	set calc($roi) [format %.7g $sz]
 	set total [lindex $calc(All) 0]
+
+	set xm [expr [blt::vector expr sum(z*(x*$xinc+$xlow))] / $sz] 
+	set ym [expr [blt::vector expr sum(z*(y*$yinc+$ylow))] / $sz]
+
+	set xStd [expr sqrt([blt::vector expr sum(z*((x*$xinc+$xlow)-$xm)^2)] / $sz)]
+	set yStd [expr sqrt([blt::vector expr sum(z*((y*$yinc+$ylow)-$ym)^2)] / $sz)]
+
+	set cov [expr [blt::vector expr {sum(z * ((x*$xinc+$xlow)-$xm) * ((y*$yinc+$ylow)-$ym))}] / $sz]
+
+	set thetaRad [expr {.5 * atan2(2*$cov, $xStd*$xStd - $yStd*$yStd)}]
+	set thetaDeg [expr {$thetaRad * 180.0 / acos(-1)}]
+
 	if {$sz == 0} {
-		lappend calc($roi) 0 0 0 0 0
+		lappend calc($roi) 0 0 0 0 0 0 0 0 0
 	} else {
 		lappend calc($roi) [format %.5g [expr (100.0*$sz)/$total]]
 		lappend calc($roi) [set xm [format %.5g [expr [blt::vector expr sum(z*(x*$xinc+$xlow))] / $sz]]]
 		lappend calc($roi) [set ym [format %.5g [expr [blt::vector expr sum(z*(y*$yinc+$ylow))] / $sz]]]
 		lappend calc($roi) [format %.5g [expr 2.35482*sqrt([blt::vector expr sum(z*(x*$xinc+$xlow-$xm)^2)] / $sz)]]
 		lappend calc($roi) [format %.5g [expr 2.35482*sqrt([blt::vector expr sum(z*(y*$yinc+$ylow-$ym)^2)] / $sz)]]
+		lappend calc($roi) [format %.5g $xStd]
+		lappend calc($roi) [format %.5g $yStd]
+		lappend calc($roi) [format %.5g $cov]
+		lappend calc($roi) [format %.5g $thetaDeg]
 	}
 	blt::vector destroy x y z
 }

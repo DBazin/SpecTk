@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.7.3"
+	set spectk(version) "1.7.4"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -1750,7 +1750,7 @@ proc restart2 {} {
 	dCrC
 }
 
-proc autoGate1 {name percent} {
+proc autoGate1 {name percent check} {
 	global spectk
 
 	set objects [itcl::find objects]
@@ -1766,12 +1766,12 @@ proc autoGate1 {name percent} {
 	
 		lassign [$objectname getVar] x y z low high incr
 
-		autoGate2 $x $y $z $low $high $incr $percent $name
+		autoGate2 $x $y $z $low $high $incr $percent $name $check
 	}
 
 }
 
-proc autoGate2 {x y z low high incr percent name} {
+proc autoGate2 {x y z low high incr percent name check} {
 
     	set file [open "data.txt" "w"]
 
@@ -1786,7 +1786,11 @@ proc autoGate2 {x y z low high incr percent name} {
 
     	close $file
     
-    	set command "autoGateCalculator.py"
+	if $check {
+		set command "autoEllipseCalc.py"
+	} else {
+	    	set command "autoGateCalculator.py"
+	}
     
     	set result [exec $command]
 

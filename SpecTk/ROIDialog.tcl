@@ -98,32 +98,36 @@ proc CreateROIDialog {} {
 }
 
 proc autoGate {} {
-    global spectk
+    	global spectk
 
-    set w .autoGate
-    if {[winfo exists $w]} {
-        destroy $w
-    }
-    toplevel $w
-    wm title $w "Auto Gate Input"
+    	set w .autoGate
+   	if {[winfo exists $w]} {
+        	destroy $w
+    	}
+    	toplevel $w
+    	wm title $w "Auto Gate Input"
 
-    label $w.nameLabel -text "Name:"
-    entry $w.nameEntry -textvariable spectk(roiname)
+    	label $w.nameLabel -text "Name:"
+    	entry $w.nameEntry -textvariable spectk(roiname)
 
-    label $w.percentLabel -text "Percent:"
-    entry $w.percentEntry -textvariable spectk(roipercent)
+    	label $w.percentLabel -text "Percent:"
+    	entry $w.percentEntry -textvariable spectk(roipercent)
 
-    button $w.confirmButton -text "Confirm" -command {
-        global spectk
-        autoGate1 $spectk(roiname) $spectk(roipercent)
-	destroy .autoGate
-    }
+	set spectk(useEllipse) 0
+    	checkbutton $w.ellipseCheck -text "Generate Ellipse" -variable spectk(ellipse)
 
-    grid $w.nameLabel -row 0 -column 0 -sticky w -padx 5 -pady 5
-    grid $w.nameEntry -row 0 -column 1 -padx 5 -pady 5
-    grid $w.percentLabel -row 1 -column 0 -sticky w -padx 5 -pady 5
-    grid $w.percentEntry -row 1 -column 1 -padx 5 -pady 5
-    grid $w.confirmButton -row 2 -columnspan 2 -pady 10
+    	button $w.confirmButton -text "Confirm" -command {
+        	global spectk
+        	autoGate1 $spectk(roiname) $spectk(roipercent) $spectk(ellipse)
+		destroy .autoGate
+    	}
+
+    	grid $w.nameLabel -row 0 -column 0 -sticky w -padx 5 -pady 5
+    	grid $w.nameEntry -row 0 -column 1 -padx 5 -pady 5
+    	grid $w.percentLabel -row 1 -column 0 -sticky w -padx 5 -pady 5
+    	grid $w.percentEntry -row 1 -column 1 -padx 5 -pady 5
+	grid $w.ellipseCheck -row 2 -columnspan 2 -pady 5
+    	grid $w.confirmButton -row 3 -columnspan 2 -pady 10
 }
 
 
@@ -237,8 +241,8 @@ proc ROIDialogCalculateDisplay {display} {
 				$w.text insert end "All" "red" "	[lindex $r 0]	[lindex $r 1]	[lindex $r 2]	[lindex $r 3]\n" "black"
 			}
 			if {[$display isa Display2D]} {
-				$w.text insert end "ROI	Sum	Ratio	<X/Y>	FWHM\n" "blue"
-				$w.text insert end "All" "red" "	[lindex $r 0]	[lindex $r 1]	[lindex $r 2]	[lindex $r 4]\n" "black"
+				$w.text insert end "ROI	Sum	Ratio	<X/Y>	FWHM	Std<X/Y>	Covariance	Angle\n" "blue"
+				$w.text insert end "All" "red" "	[lindex $r 0]	[lindex $r 1]	[lindex $r 2]	[lindex $r 4]	   0	   0	 0\n" "black"
 				$w.text insert end "			[lindex $r 3]	[lindex $r 5]\n" "black"
 			}
 			foreach roi [$wave FindROIs] {
@@ -248,8 +252,8 @@ proc ROIDialogCalculateDisplay {display} {
 					$w.text insert end "[$roi GetMember name]" "red" "	[lindex $r 0]	[lindex $r 1]	[lindex $r 2]	[lindex $r 3]\n" "black"
 				}
 				if {[$display isa Display2D]} {
-					$w.text insert end "[$roi GetMember name]" "red" "	[lindex $r 0]	[lindex $r 1]	[lindex $r 2]	[lindex $r 4]\n" "black"
-					$w.text insert end "			[lindex $r 3]	[lindex $r 5]\n" "black"
+					$w.text insert end "[$roi GetMember name]" "red" "	[lindex $r 0]	[lindex $r 1]	[lindex $r 2]	[lindex $r 4]	[lindex $r 6]	[lindex $r 8]	[lindex $r 9]\n" "black"
+					$w.text insert end "			[lindex $r 3]	[lindex $r 5]	[lindex $r 7]\n" "black"
 				}
 			}
 			$w.text insert end "\n"

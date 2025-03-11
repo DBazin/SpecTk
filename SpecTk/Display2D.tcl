@@ -388,7 +388,7 @@ itcl::body Display2D::ZoomLeftClick {xscreen yscreen mode} {
 	set xmax [lindex [$graph axis limits x] 1]
 	set ymin [lindex [$graph axis limits y] 0]
 	set ymax [lindex [$graph axis limits y] 1]
-# this selects the display instead of performing the binding’s action
+# this selects the display instead of performing the binding s action
 	if {$x < $xmin || $x > $xmax || $y < $ymin || $y > $ymax} {
 		$page SelectDisplay $id $mode
 		return
@@ -525,7 +525,7 @@ itcl::body Display2D::ExpandMinus {} {
 	set xmax [lindex [$graph axis limits x] 1]
 	set ymin [lindex [$graph axis limits y] 0]
 	set ymax [lindex [$graph axis limits y] 1]
-# this selects the display instead of performing the binding’s action
+# this selects the display instead of performing the binding s action
 	if {$x < $xmin || $x > $xmax || $y < $ymin || $y > $ymax} {
 		$page SelectDisplay $id 0
 		return
@@ -735,7 +735,7 @@ itcl::body Display2D::ButtonPress {xscreen yscreen mode} {
 	set xmax [lindex [$graph axis limits x] 1]
 	set ymin [lindex [$graph axis limits y] 0]
 	set ymax [lindex [$graph axis limits y] 1]
-# this selects the display instead of performing the binding’s action
+# this selects the display instead of performing the binding s action
 	if {$x < $xmin || $x > $xmax || $y < $ymin || $y > $ymax} {
 		$page SelectDisplay $id $mode
 		return
@@ -792,7 +792,7 @@ itcl::body Display2D::Click {xscreen yscreen mode} {
 	set xmax [lindex [$graph axis limits x] 1]
 	set ymin [lindex [$graph axis limits y] 0]
 	set ymax [lindex [$graph axis limits y] 1]
-# this selects the display instead of performing the binding’s action
+# this selects the display instead of performing the binding s action
 	if {$x < $xmin || $x > $xmax || $y < $ymin || $y > $ymax} {
 		$page SelectDisplay $id $mode
 		return
@@ -934,16 +934,21 @@ itcl::body Display2D::BuildROIResults {} {
 itcl::body Display2D::UpdateROIResults {wave} {
 	global spectk
 	if {[$graph marker exist roidisplay]} {$graph marker delete roidisplay}
+	
 	set str [$wave GetMember name]
-	append str [format "\n%-8s%-8s%-8s%-8s%-8s%-8s%-8s" ROI Sum Ratio <X> <Y> FWHM_X FWHM_Y]
+	append str [format "\n%-8s%-12s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-12s%-10s" \
+	    "ROI" "Sum" "Ratio" "<X>" "<Y>" "FWHM_X" "FWHM_Y" "Std_X" "Std_Y" "Covariance" "Angle"]
+	
 	set r [$wave GetMember calc(All)]
-	append str [format "\n%-8s%- 8.7g%- 8.5g%- 8.5g%- 8.5g%- 8.5g%- 8.5g" \
-	All [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5]]
+	append str [format "\n%-8s%-12.7g%-10.5g%-10.5g%-10.5g%-10.5f%-10.5f%-10.5f%-10.5f%-12.5f%-10.5f" \
+	    "All" [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5] 0 0 0 0]
+
 	foreach roi [$wave FindROIs] {
 		set r [$wave GetMember calc($roi)]
-		append str [format "\n%-8.8s%- 8.7g%- 8.5g%- 8.5g%- 8.5g%- 8.5g%- 8.5g" \
-		[$roi GetMember name] [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5]]
+		append str [format "\n%-8s%-12.7g%-10.5g%-10.5g%-10.5g%-10.5g%-10.5g%-10.5g%-10.5g%-12.7f%-10.5g" \
+		[$roi GetMember name] [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5] [lindex $r 6] [lindex $r 7] [lindex $r 8] [lindex $r 9]]
 	}
+
 	$graph marker create text -name roidisplay -coords "-Inf Inf" -text $str -anchor nw \
 	-background ivory -justify left -font roiresults
 }
