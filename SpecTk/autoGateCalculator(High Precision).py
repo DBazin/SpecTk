@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import numpy as np
-import numpy.random as rnd
 from scipy.stats import gaussian_kde
 from scipy.spatial import ConvexHull
 
@@ -22,10 +21,6 @@ x= np.array([float(i) for i in x])
 y= np.array([float(i) for i in y])
 z= np.array([float(i) for i in z])
 
-xRange = np.abs(np.percentile(x,20)-np.percentile(x,80))
-yRange = np.abs(np.percentile(y,20)-np.percentile(y,80))
-n = xRange*yRange
-
 z= np.round(z).astype(int)
 
 x2= low[0]+x*increment[0]
@@ -33,24 +28,14 @@ y2= low[1]+y*increment[1]
 
 x3= np.repeat(x2, z)
 y3= np.repeat(y2, z)
-
-ratio = n/len(x3)
-
-if ratio < 1:
-	mask = (rnd.rand(len(x3)) < ratio)
-	x4 = x3[mask]
-	y4 = y3[mask]
-else:
-	x4 = x3
-	y4 = y3
     
-xy= np.vstack([x4, y4])
+xy= np.vstack([x3, y3])
 kde= gaussian_kde(xy)
 density= kde(xy)
 
 cutOff= np.percentile(density, 100-percent)
 
-selected= np.column_stack((x4, y4, density))[density > cutOff]
+selected= np.column_stack((x3, y3, density))[density > cutOff]
 
 hull= ConvexHull(selected[:, :2])
 
