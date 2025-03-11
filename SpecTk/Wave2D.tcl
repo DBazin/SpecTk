@@ -53,6 +53,7 @@ itcl::class Wave2D {
 	public method Write {file}
 	public method Read {}
 	public method getName {}
+	public method getVar {}
 }
 
 itcl::body Wave2D::Clear {} {
@@ -76,6 +77,13 @@ itcl::body Wave2D::Clear {} {
 
 itcl::body Wave2D::getName {} {
 	return $name
+}
+
+itcl::body Wave2D::getVar {} {
+	set xData [blt::vector expr $this.x]
+	set yData [blt::vector expr $this.y]
+	set zData [blt::vector expr $this.z]
+	return [list $xData $yData $zData $low $high $increment]
 }
 
 itcl::body Wave2D::Assign {s} {

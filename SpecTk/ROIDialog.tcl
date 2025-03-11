@@ -51,12 +51,18 @@ proc CreateROIDialog {} {
 	entry $w.name -textvariable spectk(roiname) -width 10 -background white
 	grid $w.namemenu $w.name - -sticky news
 
+	label $w.percentlabel -text "Percent:" -font "general" -anchor center
+	entry $w.percent -textvariable spectk(roipercent) -width 10 -background white
+	grid $w.percentlabel $w.percent - -sticky news
+
 	button $w.upgrade -text "Upgrade Selected to Gate" -font "general" -command ROIDialogUpgrade
+	button $w.autogate -text "Create Auto Gate" -font "general" -command autoGate
 	button $w.copyselected -text "Copy to selected Graph(s)" -font "general" -command ROIDialogCopyToSelected
 #	button $w.copyall -text "Copy to all same unit Spectra" -font "general" -command ROIDialogCopyToAll
 	button $w.deleteselected -text "Delete selected" -font "general" -command ROIDialogDeleteSelected
 	button $w.deleteall -text "Delete all in selected Graph(s)" -font "general" -command ROIDialogDeleteAll
 	grid $w.upgrade - - -sticky news
+	grid $w.autogate - - -sticky news
 	grid $w.copyselected - - -sticky news
 #	grid $w.copyall - - -sticky news
 	grid $w.deleteselected - - -sticky news
@@ -93,6 +99,17 @@ proc CreateROIDialog {} {
 
 	set w $spectk(drawer).pages.roi.create
 	grid remove $w.coord $w.enter $w.cancel $w.validate
+}
+
+proc autoGate {} {
+	global spectk
+    	set name $spectk(roiname)
+    	set percent $spectk(roipercent)
+
+	puts $name
+	puts $percent
+	
+	autoGate1 $name $percent
 }
 
 proc ROIDialogGate {} {

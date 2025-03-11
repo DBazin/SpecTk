@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.7.1"
+	set spectk(version) "1.7.2"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -255,6 +255,7 @@ proc SetupMenuBar {} {
 	$w add command -label "Refresh" -command reload
 	$w add checkbutton -label "Safe Mode" -variable safeMode -onvalue 1 -offvalue 0
 	$w add command -label "Help" -command showAbout
+#	$w add command -label "Test" -command test
 	$spectk(menubar) insert end cascade -label Tool -menu $w 
 
 # Options menu
@@ -1748,6 +1749,124 @@ proc restart2 {} {
 	DeleteAllObjects
 	dCrC
 }
+
+proc autoGate1 {name percent} {
+	global spectk
+
+	set objects [itcl::find objects]
+	set tab [$spectk(pages) id select]
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	set selected [$page GetMember selected]
+
+	foreach thing $selected {
+		set id "${page}${thing}"
+		set id2 "::${page}${thing}"
+		set objectname [$id getWave]
+	
+		lassign [$objectname getVar] x y z low high incr
+
+		autoGate2 $x $y $z $low $high $incr $percent $name
+	}
+
+}
+
+proc autoGate2 {x y z low high incr percent name} {
+
+    	set file [open "data.txt" "w"]
+
+	puts $file $low
+	puts $file $high
+	puts $file $incr
+	puts $file $percent
+
+    	puts $file [join $x ","]
+    	puts $file [join $y ","]
+    	puts $file [join $z ","]
+
+    	close $file
+    
+    	set command "autoGateCalculator.py"
+    
+    	set result [exec $command]
+
+    	set xData {}
+    	set yData {}
+
+    	set cleaned [string map {"[" "" "]" "" "," ""} $result]    
+    	set values {}
+
+    	foreach v [split $cleaned] {
+        	if {[string trim $v] ne ""} {
+            		lappend values $v
+        	}
+    	}
+
+    	set xData {}
+    	set yData {}
+    	foreach {x y} $values {
+        	lappend xData $x
+        	lappend yData $y
+    	}
+
+	generateROI $name $xData $yData
+}
+
+proc generateROI {roiName xData yData} {
+    	global spectk
+
+    	set spectk(roikind) "contour"
+    	set tab [$spectk(pages) id select]
+    	if {[string equal $tab ""]} {return}
+    	set frame [$spectk(pages) tab cget $tab -window]
+    	set page [lindex [split $frame .] end]
+    	set current [$page GetMember current]
+    	set display [format %s%s $page $current]
+    	set spectk(roigraph) [$display GetMember graph]
+
+    	if {[winfo exist $spectk(roigraph).hide]} {
+        	$display HideROIResults
+    	}
+
+    	set waves [$display GetMember waves]
+    	set wave [lindex $waves 0]
+    	set stype [$wave GetMember type]
+    	set spectk(roiwave) $wave
+
+    	set roiObject "::ROI::[Proper $roiName]"
+
+    	if {[lsearch [itcl::find object -isa ROI] $roiObject] == -1} {
+        	ROI $roiObject $roiName
+    	} else {
+        	$roiObject ProcessDisplays RemoveDisplay
+    	}
+
+    	$roiObject SetMember type gc  ;# 'gc' for gate contour
+
+    	set xData [lappend xData [lindex $xData 0]]
+    	set yData [lappend yData [lindex $yData 0]]
+
+    	set xl {}
+    	set yl {}
+    	foreach x $xData y $yData {
+        	lappend xl $x
+        	lappend yl $y
+    	}
+
+    	$roiObject SetMember color red
+    	$roiObject SetMember xlimits $xl
+    	$roiObject SetMember ylimits $yl
+    	$roiObject SetMember parameters $spectk(roiwave)
+    	$roiObject SetMember units [$spectk(roiwave) GetMember unit]
+
+    	$roiObject SetMember isgate 1
+    	$roiObject GateDefine
+
+    	$spectk(roiwave) CalculateROI $roiObject
+
+    	$roiObject ProcessDisplays UpdateDisplay
+}
+
 
 
 
