@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.7.0"
+	set spectk(version) "1.7.1"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -140,6 +140,16 @@ proc SetupSpecTk {} {
 	BindArrows
 	LoadOptions
 	UpdateAssignDialog
+
+	if {[file exists "restart_temp.txt"]} {
+    		set file [open "restart_temp.txt" r]
+    		set tempNames(name) [gets $file]
+    		set tempNames(port) [gets $file]
+    		close $file
+   		file delete "restart_temp.txt"
+
+    		ConnectToServer $tempNames(name) $tempNames(port)
+	}
 }
 
 proc SetupFonts {} {
@@ -179,8 +189,6 @@ proc SetupMenuBar {} {
 # SpecTk menu
 	set w $spectk(menubar).spectk
 	menu $w -tearoff 0
-	$w add command -label "About SpecTk" -command DisplayAbout
-	$w add separator
 	$w add command -label "Connect To..." -command ConnectTo
 	menu $w.recent -tearoff 0
 	if {[file exist $SpecTkHome/SpecTkRecentServers.tcl]} {
@@ -193,6 +201,8 @@ proc SetupMenuBar {} {
 	$w add command -label "Disconnect" -command DisconnectFromServer
 	$w add command -label "Disconnect and Reconnect" -command dCrC
 	$w add separator
+	$w add command -label "Reset" -command restart2
+	$w add command -label "Restart" -command restart
 	$w add command -label "Quit SpecTk" -command ExitSpecTk -accelerator "Ctrl-Q"
 	bind $w <Motion> "%W postcascade @%y"
 	$spectk(menubar) add cascade -label SpecTk -menu $w
@@ -273,6 +283,7 @@ proc SetupMenuBar {} {
 # Help menu
 	set w $spectk(menubar).help
 	menu $w -tearoff 0
+	$w add command -label "About SpecTk" -command DisplayAbout
 	$w add checkbutton -label "Display Help" -command EnableHelp -variable spectk(helptoggle)
 	$spectk(menubar) insert end cascade -label Help -menu $w 
 }
@@ -738,14 +749,14 @@ proc AssignAll {} {
 		for {set ir 0} {$ir < [$page GetMember rows]} {incr ir} {
 			for {set ic 0} {$ic < [$page GetMember columns]} {incr ic} {
 				set disp [format "%sR%dC%d" $page $ir $ic]
-# if the display doesnÕt exists, there is nothing to display
+# if the display doesn t exists, there is nothing to display
 				if {[lsearch [itcl::find objects] $disp] == -1} {continue}
 # if the display exists and so does the graph, just update the display
 				if {[winfo exists [$disp GetMember graph]]} {
 					$disp Update
 					continue
 				}
-# if the display doesnÕt exist, check to see if the spectrum is in the spectrum list
+# if the display doesn t exist, check to see if the spectrum is in the spectrum list
 				set id [format "R%dC%d" $ir $ic]
 				set waves [$disp GetMember waves]
 				set i 0
@@ -1716,4 +1727,29 @@ proc showAbout {} {
     	.help.text insert end "Safe Mode: Toggle safe mode on or off which-\n checks for empty ROIs and removes them\n" "normal"
     	.help.text configure -state disabled
 }
+
+proc restart {} {
+    	global tempNames
+
+    	set file [open "restart_temp.txt" w]
+    	puts $file "$tempNames(name)\n$tempNames(port)"
+    	close $file
+
+    	exec SpecTk & 
+
+    	exit
+}
+
+
+proc restart2 {} {
+	global tempNames
+
+    	ClearAll
+	DeleteAllObjects
+	dCrC
+}
+
+
+
+
 SetupSpecTk
