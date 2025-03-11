@@ -51,10 +51,6 @@ proc CreateROIDialog {} {
 	entry $w.name -textvariable spectk(roiname) -width 10 -background white
 	grid $w.namemenu $w.name - -sticky news
 
-	label $w.percentlabel -text "Percent:" -font "general" -anchor center
-	entry $w.percent -textvariable spectk(roipercent) -width 10 -background white
-	grid $w.percentlabel $w.percent - -sticky news
-
 	button $w.upgrade -text "Upgrade Selected to Gate" -font "general" -command ROIDialogUpgrade
 	button $w.autogate -text "Create Auto Gate" -font "general" -command autoGate
 	button $w.copyselected -text "Copy to selected Graph(s)" -font "general" -command ROIDialogCopyToSelected
@@ -102,15 +98,35 @@ proc CreateROIDialog {} {
 }
 
 proc autoGate {} {
-	global spectk
-    	set name $spectk(roiname)
-    	set percent $spectk(roipercent)
+    global spectk
 
-	puts $name
-	puts $percent
-	
-	autoGate1 $name $percent
+    set w .autoGate
+    if {[winfo exists $w]} {
+        destroy $w
+    }
+    toplevel $w
+    wm title $w "Auto Gate Input"
+
+    label $w.nameLabel -text "Name:"
+    entry $w.nameEntry -textvariable spectk(roiname)
+
+    label $w.percentLabel -text "Percent:"
+    entry $w.percentEntry -textvariable spectk(roipercent)
+
+    button $w.confirmButton -text "Confirm" -command {
+        global spectk
+        autoGate1 $spectk(roiname) $spectk(roipercent)
+	destroy .autoGate
+    }
+
+    grid $w.nameLabel -row 0 -column 0 -sticky w -padx 5 -pady 5
+    grid $w.nameEntry -row 0 -column 1 -padx 5 -pady 5
+    grid $w.percentLabel -row 1 -column 0 -sticky w -padx 5 -pady 5
+    grid $w.percentEntry -row 1 -column 1 -padx 5 -pady 5
+    grid $w.confirmButton -row 2 -columnspan 2 -pady 10
 }
+
+
 
 proc ROIDialogGate {} {
 	global spectk

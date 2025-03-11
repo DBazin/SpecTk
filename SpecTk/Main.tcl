@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.7.2"
+	set spectk(version) "1.7.3"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
