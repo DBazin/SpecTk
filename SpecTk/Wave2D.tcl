@@ -346,18 +346,25 @@ itcl::body Wave2D::CalculateROI {roi} {
 		lappend calc($roi) 0 0 0 0 0 0 0 0 0
 	} else {
 		set xm [expr [blt::vector expr sum(z*(x*$xinc+$xlow))] / $sz] 
-		set ym [expr [blt::vector expr sum(z*(y*$yinc+$ylow))] / $sz]
+		set ym [expr [blt::vector expr sum(z*(y*$yinc+$ylow))] / $sz] 
+		if {$sz > 1} {
+			set xStd [expr sqrt([blt::vector expr sum(z*((x*$xinc+$xlow)-$xm)^2)] / $sz)]
+			set yStd [expr sqrt([blt::vector expr sum(z*((y*$yinc+$ylow)-$ym)^2)] / $sz)]
+    
+    			set cov [expr [blt::vector expr {sum(z * ((x*$xinc+$xlow)-$xm) * ((y*$yinc+$ylow)-$ym))}] / double($sz-1)]
 
-		set xStd [expr sqrt([blt::vector expr sum(z*((x*$xinc+$xlow)-$xm)^2)] / double($sz-1))]
-		set yStd [expr sqrt([blt::vector expr sum(z*((y*$yinc+$ylow)-$ym)^2)] / double($sz-1))]
+			set thetaRad [expr {.5 * atan2(2*$cov, $xStd*$xStd - $yStd*$yStd)}]
+			set thetaDeg [expr {$thetaRad * 180.0 / acos(-1)}]
+		} else {
+   	 		set xStd 0
+    			set yStd 0
+    			set cov 0
+			set thetaDeg 0
+		}
 
-		set cov [expr [blt::vector expr {sum(z * ((x*$xinc+$xlow)-$xm) * ((y*$yinc+$ylow)-$ym))}] / double($sz-1)]
-
-		set thetaRad [expr {.5 * atan2(2*$cov, $xStd*$xStd - $yStd*$yStd)}]
-		set thetaDeg [expr {$thetaRad * 180.0 / acos(-1)}]
 		lappend calc($roi) [format %.5g [expr (100.0*$sz)/$total]]
-		lappend calc($roi) [set xm [format %.5g [expr [blt::vector expr sum(z*(x*$xinc+$xlow))] / $sz]]]
-		lappend calc($roi) [set ym [format %.5g [expr [blt::vector expr sum(z*(y*$yinc+$ylow))] / $sz]]]
+		lappend calc($roi) [format %.5g $xm]
+		lappend calc($roi) [format %.5g $ym]
 		lappend calc($roi) [format %.5g [expr 2.35482*sqrt([blt::vector expr sum(z*(x*$xinc+$xlow-$xm)^2)] / $sz)]]
 		lappend calc($roi) [format %.5g [expr 2.35482*sqrt([blt::vector expr sum(z*(y*$yinc+$ylow-$ym)^2)] / $sz)]]
 		lappend calc($roi) [format %.5g $xStd]

@@ -936,17 +936,17 @@ itcl::body Display2D::UpdateROIResults {wave} {
 	if {[$graph marker exist roidisplay]} {$graph marker delete roidisplay}
 	
 	set str [$wave GetMember name]
-	append str [format "\n%-8s%-12s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-12s%-10s" \
-	    "ROI" "Sum" "Ratio" "<X>" "<Y>" "FWHM_X" "FWHM_Y" "Std_X" "Std_Y" "Covariance" "Angle"]
+	append str [format "\n%-8s%-12s%-10s%-10s%-10s%-10s%-10s%-12s%-10s" \
+	    "ROI" "Sum" "Ratio" "<X>" "<Y>" "FWHM_X" "FWHM_Y" "Covariance" "Angle"]
 	
 	set r [$wave GetMember calc(All)]
-	append str [format "\n%-8s%-12.7g%-10.5g%-10.5g%-10.5g%-10.5f%-10.5f%-10.5f%-10.5f%-12.5f%-10.5f" \
-	    "All" [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5] 0 0 0 0]
+	append str [format "\n%-8s%-12.7g%-10.5g%-10.5g%-10.5g%-10.5f%-10.5f%-12.5f%-10.5f" \
+	    "All" [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5] 0 0]
 
 	foreach roi [$wave FindROIs] {
 		set r [$wave GetMember calc($roi)]
-		append str [format "\n%-8s%-12.7g%-10.5g%-10.5g%-10.5g%-10.5g%-10.5g%-10.5g%-10.5g%-12.7f%-10.5g" \
-		[$roi GetMember name] [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5] [lindex $r 6] [lindex $r 7] [lindex $r 8] [lindex $r 9]]
+		append str [format "\n%-8s%-12.7g%-10.5g%-10.5g%-10.5g%-10.5g%-10.5g%-12.7f%-10.5g" \
+		[$roi GetMember name] [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5] [lindex $r 8] [lindex $r 9]]
 	}
 
 	$graph marker create text -name roidisplay -coords "-Inf Inf" -text $str -anchor nw \
