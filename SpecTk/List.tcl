@@ -143,7 +143,7 @@ itcl::body PageList::reorder {list} {
 		lappend newOrder [list $i [lindex $pageList [expr $j]]]
 		incr j
 	}
-	set sortedList [lsort -index 0 $newOrder]
+	set sortedList [lsort -integer -index 0 $newOrder]
 	set pageList [list]
 	foreach i $sortedList {
         	lappend pageList [lindex $i 1]

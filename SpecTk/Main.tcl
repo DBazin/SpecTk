@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.7.8"
+	set spectk(version) "1.7.9"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -1686,8 +1686,8 @@ proc xImport {} {
     	set fileContents [read $file]
 
     	if {[regexp {Geometry\s+(\d+),(\d+)} $fileContents match rows cols]} {
-        	set spectk(pageRows) $rows
-        	set spectk(pageColumns) $cols
+        	set spectk(pageRows) $cols
+        	set spectk(pageColumns) $rows
     	}
 
     	set filename [file tail $fName]
@@ -1754,7 +1754,7 @@ proc restart2 {} {
 	dCrC
 }
 
-proc autoGate1 {name percent check} {
+proc autoGate1 {name percent check roi} {
 	global spectk
 
 	set objects [itcl::find objects]
@@ -1763,12 +1763,21 @@ proc autoGate1 {name percent check} {
 	set page [lindex [split $frame .] end]
 	set selected [$page GetMember selected]
 
+	set roi2 $spectk(roiobject)
+
 	foreach thing $selected {
 		set id "${page}${thing}"
 		set id2 "::${page}${thing}"
 		set objectname [$id getWave]
+		if {[$roi2 GetMember name] == $roi} {
+			puts "this"
+			lassign [$objectname getVarRoi $roi2] x y z low high incr
+		} else {
+			puts "that"
+			lassign [$objectname getVar] x y z low high incr
+		}
 	
-		lassign [$objectname getVar] x y z low high incr
+		# lassign [$objectname getVar] x y z low high incr
 
 		autoGate2 $x $y $z $low $high $incr $percent $name $check
 	}

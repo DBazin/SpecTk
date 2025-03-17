@@ -59,6 +59,7 @@ itcl::class Wave2D {
 	public method Read {}
 	public method getName {}
 	public method getVar {}
+	public method getVarRoi {roi}
 }
 
 itcl::body Wave2D::Clear {} {
@@ -89,6 +90,26 @@ itcl::body Wave2D::getVar {} {
 	set yData [blt::vector expr $this.y]
 	set zData [blt::vector expr $this.z]
 	return [list $xData $yData $zData $low $high $increment]
+}
+
+itcl::body Wave2D::getVarRoi {roi} {
+	set roitype [$roi GetMember type]
+	if {![string equal $roitype c] && ![string equal $roitype gc]} {return}
+	set xlow [lindex $low 0]
+	set ylow [lindex $low 1]
+	set xinc [lindex $increment 0]
+	set yinc [lindex $increment 1]
+	set xl [$roi GetMember xlimits]
+	set yl [$roi GetMember ylimits]
+
+	blt::vector create x y z
+	Wave2DInPolygon $xl $yl "$xlow $ylow $xinc $yinc" "$this.x $this.y $this.z" "x y z"
+
+	set x2 [blt::vector expr x]
+	set y2 [blt::vector expr y]
+	set z2 [blt::vector expr z]
+
+	return [list $x2 $y2 $z2 $low $high $increment]
 }
 
 itcl::body Wave2D::Assign {s} {
