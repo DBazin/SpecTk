@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.7.10"
+	set spectk(version) "1.7.11"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -1858,7 +1858,7 @@ proc generateROI {roiName xData yData} {
         	$roiObject ProcessDisplays RemoveDisplay
     	}
 
-    	$roiObject SetMember type c  ;# 'gc' for gate contour
+    	$roiObject SetMember type gc  ;# 'gc' for gate contour
 
     	set xData [lappend xData [lindex $xData 0]]
     	set yData [lappend yData [lindex $yData 0]]
