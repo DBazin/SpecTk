@@ -939,7 +939,7 @@ itcl::body Display2D::UpdateROIResults {wave} {
 	set str [$wave GetMember name]
 	if {$advCalc == 1} {
 		append str [format "\n%-8s%-12s%-10s%-10s%-10s%-10s%-10s%-12s%-10s" \
-		    "ROI" "Sum" "Ratio" "<X>" "<Y>" "FWHM_X" "FWHM_Y" "Covariance" "Angle"]
+		    "ROI" "Sum" "Ratio" "<X>" "<Y>" "FWHM_X" "FWHM_Y" "Covariance" "Slope"]
 	} else {
 		append str [format "\n%-8s%-12s%-10s%-10s%-10s%-10s%-10s" \
 		    "ROI" "Sum" "Ratio" "<X>" "<Y>" "FWHM_X" "FWHM_Y"]
@@ -947,9 +947,11 @@ itcl::body Display2D::UpdateROIResults {wave} {
 
 	set r [$wave GetMember calc(All)]
 
+	set test 20
+
 	if {$advCalc == 1} {
-		append str [format "\n%-8s%-12.7g%-10.5g%-10.5g%-10.5g%-10.5f%-10.5f%-12.5f%-10.5f" \
-		    "All" [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5] 0 0]
+		append str [format "\n%-8s%-12.7g%-10.5g%-10.5g%-10.5g%-10.5f%-10.5f%-13.5f%-10f" \
+		    "All" [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5] 0 0 0]
 	} else {
 		append str [format "\n%-8s%-12.7g%-10.5g%-10.5g%-10.5g%-10.5g%-10.5g" \
 		    "All" [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5]]
@@ -959,7 +961,7 @@ itcl::body Display2D::UpdateROIResults {wave} {
 		set r [$wave GetMember calc($roi)]
 		if {$advCalc == 1} {
 			append str [format "\n%-8s%-12.7g%-10.5g%-10.5g%-10.5g%-10.5g%-10.5g%-12.7f%-10.5g" \
-			    [$roi GetMember name] [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5] [lindex $r 8] [lindex $r 9]]
+			    [$roi GetMember name] [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5] [lindex $r 8] [lindex $r 10]]
 		} else {
 			append str [format "\n%-8s%-12.7g%-10.5g%-10.5g%-10.5g%-10.5g%-10.5g" \
 			    [$roi GetMember name] [lindex $r 0] [lindex $r 1] [lindex $r 2] [lindex $r 3] [lindex $r 4] [lindex $r 5]]
