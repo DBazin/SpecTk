@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.7.7"
+	set spectk(version) "1.7.8"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -70,6 +70,9 @@ proc SetupSpecTk {} {
 	global tempNames
 	set tempNames(port) 0
 	set tempNames(name) 0
+
+	global advCalc
+	set advCalc 0
 
 	set spectk(toplevel) .top
 	frame $spectk(toplevel) -borderwidth 2 -relief raised -width 1600 -height 1200
@@ -262,6 +265,7 @@ proc SetupMenuBar {} {
 	set w $spectk(menubar).options
 	menu $w -tearoff 0
 	$w add checkbutton -label "Resize Window from File" -variable spectk(resizeWindow)
+	$w add checkbutton -label "Advanced Calculations" -variable advCalc -onvalue 1 -offvalue 0
 	$w add separator
 #	menu $w.preferences -tearoff 0
 #	$w add cascade -label "X Windows Preferences" -menu $w.preferences
@@ -1845,7 +1849,7 @@ proc generateROI {roiName xData yData} {
         	$roiObject ProcessDisplays RemoveDisplay
     	}
 
-    	$roiObject SetMember type gc  ;# 'gc' for gate contour
+    	$roiObject SetMember type c  ;# 'gc' for gate contour
 
     	set xData [lappend xData [lindex $xData 0]]
     	set yData [lappend yData [lindex $yData 0]]

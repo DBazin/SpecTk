@@ -26,6 +26,9 @@ xRange = np.abs(np.percentile(x,20)-np.percentile(x,80))
 yRange = np.abs(np.percentile(y,20)-np.percentile(y,80))
 n = xRange*yRange
 
+if n > 10000:
+	n = 10000
+
 z= np.round(z).astype(int)
 
 x2= low[0]+x*increment[0]

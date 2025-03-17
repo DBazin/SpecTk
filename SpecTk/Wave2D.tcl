@@ -327,6 +327,7 @@ itcl::body Wave2D::CalculateAll {} {
 }
 
 itcl::body Wave2D::CalculateROI {roi} {
+	global advCalc
 	set roitype [$roi GetMember type]
 	if {![string equal $roitype c] && ![string equal $roitype gc]} {return}
 	set xlow [lindex $low 0]
@@ -347,19 +348,19 @@ itcl::body Wave2D::CalculateROI {roi} {
 	} else {
 		set xm [expr [blt::vector expr sum(z*(x*$xinc+$xlow))] / $sz] 
 		set ym [expr [blt::vector expr sum(z*(y*$yinc+$ylow))] / $sz] 
-		if {$sz > 1} {
-			set xStd [expr sqrt([blt::vector expr sum(z*((x*$xinc+$xlow)-$xm)^2)] / $sz)]
-			set yStd [expr sqrt([blt::vector expr sum(z*((y*$yinc+$ylow)-$ym)^2)] / $sz)]
-    
-    			set cov [expr [blt::vector expr {sum(z * ((x*$xinc+$xlow)-$xm) * ((y*$yinc+$ylow)-$ym))}] / double($sz-1)]
 
+		set xStd 0
+		set yStd 0   
+    		set cov 0
+		set thetaRad 0
+		set thetaDeg 0
+
+		if {$sz > 1 && $advCalc == 1} {
+			set xStd [expr sqrt([blt::vector expr sum(z*((x*$xinc+$xlow)-$xm)^2)] / $sz)]
+			set yStd [expr sqrt([blt::vector expr sum(z*((y*$yinc+$ylow)-$ym)^2)] / $sz)]    
+    			set cov [expr [blt::vector expr {sum(z * ((x*$xinc+$xlow)-$xm) * ((y*$yinc+$ylow)-$ym))}] / double($sz-1)]
 			set thetaRad [expr {.5 * atan2(2*$cov, $xStd*$xStd - $yStd*$yStd)}]
 			set thetaDeg [expr {$thetaRad * 180.0 / acos(-1)}]
-		} else {
-   	 		set xStd 0
-    			set yStd 0
-    			set cov 0
-			set thetaDeg 0
 		}
 
 		lappend calc($roi) [format %.5g [expr (100.0*$sz)/$total]]
