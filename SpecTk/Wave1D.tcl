@@ -15,6 +15,7 @@ itcl::class Wave1D {
 	private variable calc
 	private variable offset false
 	private variable offVal .0000000001
+	private variable outChanList
 
 	
 	constructor {theName} {
@@ -68,6 +69,7 @@ itcl::class Wave1D {
 	public method toggleOffset {check}
 	public method OffZero {}
 	public method getName {}
+	public method getChan {}
 }
 
 itcl::body Wave1D::Clear {} {
@@ -78,7 +80,7 @@ itcl::body Wave1D::Clear {} {
 	set unit unknown
 	set vunit unknown
 	set parameter ""
-	set spectrum ""
+#	set spectrum ""
 	set type ""
 	set datatype ""
 	set gate True
@@ -87,6 +89,10 @@ itcl::body Wave1D::Clear {} {
 	blt::vector destroy $this.error
 	blt::vector create $this.data
 	blt::vector create $this.error
+}
+
+itcl::body Wave1D::getChan {} {
+	return $outChanList
 }
 
 itcl::body Wave1D::getName {} {
@@ -101,12 +107,15 @@ itcl::body Wave1D::Assign {s} {
 
 itcl::body Wave1D::Update {withdata} {
     set spectrumList [spectrum -list $spectrum]
+
     set type [lindex $spectrumList 2]
     set parameter [lindex $spectrumList 3]
     set re [lindex [lindex $spectrumList 4] 0]
+
     set low [lindex $re 0]
     set high [lindex $re 1]
     set bins [lindex $re 2]
+
     set datatype [lindex $spectrumList 5]
 
     # Determine unit based on spectrum type
@@ -128,6 +137,7 @@ itcl::body Wave1D::Update {withdata} {
     }
 
     # Fill vectors with data
+
     set increment [expr {1.0 * ($high - $low) / $bins}]
     set xlist {}
     for {set i 0} {$i <= $bins} {incr i} {
@@ -212,8 +222,7 @@ itcl::body Wave1D::SetVector {} {
 		set chanlist $filteredChanlist
 		set datalist $filteredDatalist
 
-		#puts " channels: $chanlist"
-		#puts " data: $datalist"
+		set outChanList $chanlist
 
 		for {set i 0} {$i < [expr $nchan]} {incr i} {$this.data index [lindex $chanlist $i] [lindex $datalist $i]}
 	}
@@ -316,7 +325,7 @@ itcl::body Wave1D::CalculateROI {roi} {
 	} else {
 		lappend calc($roi) [format %.5g [expr (100.0*$sy)/$total]]
 		lappend calc($roi) [set m [format %.5g [expr [blt::vector expr sum(x*y)] / $sy]]]
-		lappend calc($roi) [format %.5g [expr 2.35482*sqrt([blt::vector expr sum(y*(x-$m)^2)] / $sy)]]
+		lappend calc($roi) [format %.5g [expr sqrt([blt::vector expr sum(y*(x-$m)^2)] / $sy)]]
 	}
 	blt::vector destroy x y
 }

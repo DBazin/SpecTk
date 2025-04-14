@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.8.0"
+	set spectk(version) "1.8.1"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -114,7 +114,7 @@ proc SetupSpecTk {} {
 	frame $spectk(buttons) -width 500 -height $spectk(buttonheight) -borderwidth 2 -relief groove
 
 	set spectk(pages) $spectk(toplevel).pages
-	blt::tabnotebook $spectk(pages) -borderwidth 0 -outerpad 0
+	blt::tabnotebook $spectk(pages) -borderwidth 0 -outerpad 0 -font {Helvetica 12}
 	grid $spectk(status) - -sticky news
 	grid $spectk(tools) $spectk(pages) -sticky news
 	grid ^ $spectk(info) -sticky news
@@ -167,7 +167,7 @@ proc SetupFonts {} {
 	set spectk(graphsSize) -9
 	set spectk(graphlabelsFamily) helvetica
 	set spectk(graphlabelsSize) -9
-	set spectk(roiresultsFamily) courier 
+	set spectk(roiresultsFamily) helvetica
 	set spectk(roiresultsSize) -9
 	set fonts [font names]
 	if {[lsearch $fonts general] == -1} {font create general -family helvetica -size -12 -weight normal}
@@ -182,8 +182,8 @@ proc SetupFonts {} {
 	if {[lsearch $fonts graphs3] == -1} {font create graphs3 -family helvetica -size -12 -weight normal}
 	if {[lsearch $fonts graphs4] == -1} {font create graphs4 -family helvetica -size -14 -weight normal}
 	if {[lsearch $fonts graphlabels] == -1} {font create graphlabels -family helvetica -size -9 -weight normal}
-	if {[lsearch $fonts roiresults] == -1} {font create roiresults -family courier -size -9 -weight bold}
-}	
+	if {[lsearch $fonts roiresults] == -1} {font create roiresults -family helvetica -size -9 -weight normal}
+}		
 
 proc SetupMenuBar {} {
 	package require tooltip
@@ -662,9 +662,6 @@ proc CreateFontDialog {} {
 	button $w.msize5 -text - -command "DecrementFont graphlabels" -font "helvetica -12"
 	grid $w.label5 $w.lfamily5 $w.family5 $w.lsize5 $w.psize5 $w.size5 $w.msize5 -sticky news
 
-	puts $spectk(roiresultsFamily)
-	puts $spectk(roiresultsSize)
-
 	label $w.label6 -text "Graph Results:" -anchor w -font "helvetica -12 bold"
 	label $w.lfamily6 -text Family -anchor w -font "helvetica -12"
 	menubutton $w.family6 -textvariable spectk(roiresultsFamily) -menu $w.family6.choice -anchor w -font "helvetica -12"
@@ -713,9 +710,9 @@ proc SetFont {category} {
 			font configure graphlabels -family $spectk(graphlabelsFamily) -size $spectk(graphlabelsSize)
 		}
 		roiresults {
-			puts $spectk(roiresultsFamily)
 			font configure roiresults -family $spectk(roiresultsFamily) -size $spectk(roiresultsSize)
 		}
+
 	}
 }
 
@@ -1769,7 +1766,6 @@ proc autoGate1 {name percent check roi} {
 
 	if {$roi ne ""} {
 		set roi2 $spectk(roiobject)
-		puts $roi2
 	}
 
 	foreach thing $selected {
@@ -1891,9 +1887,5 @@ proc generateROI {roiName xData yData} {
 
     	$roiObject ProcessDisplays UpdateDisplay
 }
-
-
-
-
 
 SetupSpecTk
