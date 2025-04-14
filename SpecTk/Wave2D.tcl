@@ -358,6 +358,22 @@ itcl::body Wave2D::CalculateROI {roi} {
 	set xl [$roi GetMember xlimits]
 	set yl [$roi GetMember ylimits]
 
+	set n [llength $xl]
+
+	set area 0
+	set areaTemp 0
+
+	for {set i 0} {$i < $n} {incr i} {
+		set j [expr {($i+1)%$n}]
+		set xi [lindex $xl $i]
+		set yi [lindex $yl $i]
+		set xj [lindex $xl $j]
+		set yj [lindex $yl $j]
+		set areaTemp [expr {$areaTemp+($xi*$yj-$xj*$yi)}]
+    	}
+
+	set area [expr {abs($areaTemp)*.5}]
+
 	blt::vector create x y z
 	Wave2DInPolygon $xl $yl "$xlow $ylow $xinc $yinc" "$this.x $this.y $this.z" "x y z"
 	set sz [blt::vector expr sum(z)]
@@ -365,22 +381,21 @@ itcl::body Wave2D::CalculateROI {roi} {
 	set total [lindex $calc(All) 0]
 
 	if {$sz == 0} {
-		lappend calc($roi) 0 0 0 0 0 0 0 0 0 0
+		lappend calc($roi) 0 0 0 0 0 0 0 0 0 0 [format %.5g $area]
 	} else {
 		set xm [expr [blt::vector expr sum(z*(x*$xinc+$xlow))] / $sz] 
 		set ym [expr [blt::vector expr sum(z*(y*$yinc+$ylow))] / $sz] 
-
-		set xStd 0
-		set yStd 0   
+		
+		set xStd [expr sqrt([blt::vector expr sum(z*((x*$xinc+$xlow)-$xm)^2)] / $sz)]
+		set yStd [expr sqrt([blt::vector expr sum(z*((y*$yinc+$ylow)-$ym)^2)] / $sz)]  
+ 
     		set cov 0
 		set thetaRad 0
 		set thetaDeg 0
 		set slope 0
 
-		if {$sz > 1 && $advCalc == 1} {
-			set xStd [expr sqrt([blt::vector expr sum(z*((x*$xinc+$xlow)-$xm)^2)] / $sz)]
-			set yStd [expr sqrt([blt::vector expr sum(z*((y*$yinc+$ylow)-$ym)^2)] / $sz)]    
-    			set cov [expr [blt::vector expr {sum(z * ((x*$xinc+$xlow)-$xm) * ((y*$yinc+$ylow)-$ym))}] / double($sz-1)]
+		if {$sz > 1 && $advCalc == 1} {  
+    			set cov [expr [blt::vector expr {sum(z * ((x*$xinc+$xlow)-$xm) * ((y*$yinc+$ylow)-$ym))}] / double($sz)]
 			set thetaRad [expr {.5 * atan2(2*$cov, $xStd*$xStd - $yStd*$yStd)}]
 			set thetaDeg [expr {$thetaRad * 180.0 / acos(-1)}]
 			set slope [expr {$cov/($xStd*$xStd)}]
@@ -396,6 +411,7 @@ itcl::body Wave2D::CalculateROI {roi} {
 		lappend calc($roi) [format %.5g $cov]
 		lappend calc($roi) [format %.5g $thetaDeg]
 		lappend calc($roi) [format %.5g $slope]
+		lappend calc($roi) [format %.5g $area]
 	}
 	blt::vector destroy x y z
 }

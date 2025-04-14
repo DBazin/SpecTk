@@ -935,99 +935,91 @@ itcl::body Display2D::UpdateROIResults {wave} {
 	global spectk
 	global advCalc
 	if {[$graph marker exist roidisplay]} {$graph marker delete roidisplay}
-	
-	set max_roi_length 8  ;
-
-	if {$advCalc == 1} {
-		set divider "+--------+--------------+------------+------------+------------+------------+------------+--------------+------------+"
-	} else {
-		set divider "+--------+--------------+------------+------------+------------+------------+------------+"
-	}
 
 	proc format_roi_name {roi_name max_len} {
 		set len [string length $roi_name]
 		if {$len > $max_len} {
-			return [string range $roi_name 0 [expr {$max_len - 1}]] ;# Truncate if too long
+			return [string range $roi_name 0 [expr {$max_len - 1}]]
 		} else {
-			return [format "%-*s" $max_len $roi_name]  ;# Left-align and pad if too short
+			return [format "%-*s" $max_len $roi_name]
 		}
 	}
 
 	proc format_number {value width decimals} {
-		if {$value >= 1000} {
-			set formatted [format "%.0f" $value]  ;# No decimals for large numbers
-		} else {
-			set formatted [format "%.*f" $decimals $value]  ;# Keep decimals for small numbers
+		if {$value eq ""} {
+			set value 0.0
 		}
+		set formatted [format "%.*f" $decimals $value]
 		set total_width [string length $formatted]
 		if {$total_width < $width} {
 			set padding [string repeat " " [expr {$width - $total_width}]]
 			return "$padding$formatted"
 		} else {
-			return $formatted  ;# If already fits, return as is
+			return $formatted
 		}
 	}
 
-	set str "$divider\n"
-
-	if {$advCalc == 1} {
-		append str [format "| %-8s | %-12s | %-10s | %-10s | %-10s | %-10s | %-10s | %-12s | %-10s |\n" \
-		    "ROI" "Sum" "Ratio" "<X>" "<Y>" "FWHM_X" "FWHM_Y" "Covariance" "Slope"]
-	} else {
-		append str [format "| %-8s | %-12s | %-10s | %-10s | %-10s | %-10s | %-10s |\n" \
-		    "ROI" "Sum" "Ratio" "<X>" "<Y>" "FWHM_X" "FWHM_Y"]
+	set max_roi_length [string length "All"]
+	foreach roi [$wave FindROIs] {
+		set roi_name [$roi GetMember name]
+		set len [string length $roi_name]
+		if {$len > $max_roi_length} {
+			set max_roi_length $len
+		}
 	}
 
-	append str "$divider\n"
+	if {$advCalc == 1} {
+		set header_fmt "  %-${max_roi_length}s | %-12s | %-10s | %-10s | %-10s | %-10s | %-10s | %-12s | %-10s | %10s\n"
+		append str [format $header_fmt "ROI" "Sum" "Ratio" "<X>" "<Y>" "\u03C3_X" "\u03C3_Y" "Covariance" "Slope" "Area"]
+	} else {
+		set header_fmt "  %-${max_roi_length}s | %-12s | %-10s | %-10s | %-10s | %-10s | %-10s\n"
+		append str [format $header_fmt "ROI" "Sum" "Ratio" "<X>" "<Y>" "\u03C3_X" "\u03C3_Y"]
+	}
 
 	set r [$wave GetMember calc(All)]
 	set roi_name [format_roi_name "All" $max_roi_length]
 
-	set sum [format_number [lindex $r 0] 12 0]
+	set sum [format_number [lindex $r 0] 12 5]
 	set ratio [format_number [lindex $r 1] 10 5]
 	set x [format_number [lindex $r 2] 10 5]
 	set y [format_number [lindex $r 3] 10 5]
-	set fwhm_x [format_number [lindex $r 4] 10 5]
-	set fwhm_y [format_number [lindex $r 5] 10 5]
+	set sigma_x [format_number [lindex $r 6] 10 5]
+	set sigma_y [format_number [lindex $r 7] 10 5]
 
 	if {$advCalc == 1} {
 		set covariance [format_number 0 12 5]
 		set slope [format_number 0 10 5]
-		append str [format "| %-8s | %12s | %10s | %10s | %10s | %10s | %10s | %12s | %10s |\n" \
-		    $roi_name $sum $ratio $x $y $fwhm_x $fwhm_y $covariance $slope]
+		set area [format_number 0 10 5]
+		set row_fmt "  %-${max_roi_length}s | %12s | %10s | %10s | %10s | %10s | %10s | %12s | %10s | %10s\n"
+		append str [format $row_fmt $roi_name $sum $ratio $x $y $sigma_x $sigma_y $covariance $slope $area]
 	} else {
-		append str [format "| %-8s | %12s | %10s | %10s | %10s | %10s | %10s |\n" \
-		    $roi_name $sum $ratio $x $y $fwhm_x $fwhm_y]
+		set row_fmt "  %-${max_roi_length}s | %12s | %10s | %10s | %10s | %10s | %10s\n"
+		append str [format $row_fmt $roi_name $sum $ratio $x $y $sigma_x $sigma_y]
 	}
-
-	append str "$divider\n"
 
 	foreach roi [$wave FindROIs] {
 		set r [$wave GetMember calc($roi)]
 		set roi_name [format_roi_name [$roi GetMember name] $max_roi_length]
 
-		set sum [format_number [lindex $r 0] 12 0]
+		set sum [format_number [lindex $r 0] 12 5]
 		set ratio [format_number [lindex $r 1] 10 5]
 		set x [format_number [lindex $r 2] 10 5]
 		set y [format_number [lindex $r 3] 10 5]
-		set fwhm_x [format_number [lindex $r 4] 10 5]
-		set fwhm_y [format_number [lindex $r 5] 10 5]
+		set sigma_x [format_number [lindex $r 6] 10 5]
+		set sigma_y [format_number [lindex $r 7] 10 5]
 
 		if {$advCalc == 1} {
 			set covariance [format_number [lindex $r 8] 12 5]
 			set slope [format_number [lindex $r 10] 10 5]
-			append str [format "| %-8s | %12s | %10s | %10s | %10s | %10s | %10s | %12s | %10s |\n" \
-			    $roi_name $sum $ratio $x $y $fwhm_x $fwhm_y $covariance $slope]
+			set area [format_number [lindex $r 11] 10 5]
+			append str [format $row_fmt $roi_name $sum $ratio $x $y $sigma_x $sigma_y $covariance $slope $area]
 		} else {
-			append str [format "| %-8s | %12s | %10s | %10s | %10s | %10s | %10s |\n" \
-			    $roi_name $sum $ratio $x $y $fwhm_x $fwhm_y]
+			append str [format $row_fmt $roi_name $sum $ratio $x $y $sigma_x $sigma_y]
 		}
-
-		append str "$divider\n"
 	}
 
 	$graph marker create text -name roidisplay -coords "-Inf Inf" -text $str -anchor nw \
-	-background ivory -justify left -font roiresults
+	-background ivory -justify left -font "Courier 12 bold"
 }
 
 itcl::body Display2D::ShowROIResults {} {

@@ -98,58 +98,62 @@ proc CreateROIDialog {} {
 }
 
 proc autoGate {} {
-    	global spectk
+ 	global spectk
 	set tab [$spectk(pages) id select]
-	if {[string equal $tab ""]} {return}
-	set frame [$spectk(pages) tab cget $tab -window]
-	set page [lindex [split $frame .] end]
-	set selected [$page GetMember selected]
-	set current [$page GetMember current]
-	set display [format %s%s $page $current]
+    	if {[string equal $tab ""]} {return}
+    	set frame [$spectk(pages) tab cget $tab -window]
+    	set page [lindex [split $frame .] end]
+    	set selected [$page GetMember selected]
+    	set current [$page GetMember current]
+    	set display [format %s%s $page $current]
 
     	set w .autoGate
 
-   	if {[winfo exists $w]} {
+	set spectk(roiname) ""
+	set spectk(roiname2) ""
+
+    	if {[winfo exists $w]} {
         	destroy $w
     	} 
 
     	toplevel $w
     	wm title $w "Auto Gate Input"
 
-    	label $w.nameLabel -text "Name:"
+
+    	menubutton $w.nameLabel -text "Name:" -menu $w.nameLabel.menu
+    	menu $w.nameLabel.menu
     	entry $w.nameEntry -textvariable spectk(roiname2)
 
-    	label $w.percentLabel -text "Percent:"
+   	label $w.percentLabel -text "Percent:"
     	entry $w.percentEntry -textvariable spectk(roipercent)
 
-	menubutton $w.regionmenu -text "Region:" -menu $w.regionmenu.menu
-	menu $w.regionmenu.menu	
-	if {[winfo exists $w.regionmenu.menu]} {
-    		$w.regionmenu.menu delete 0 end
-	} else {
-    		menu $w.regionmenu.menu
-	}
+
+    	menubutton $w.regionmenu -text "Region:" -menu $w.regionmenu.menu
+    	menu $w.regionmenu.menu
     	entry $w.region -textvariable spectk(roiname) -width 10 -background white
 
-	$w.regionmenu.menu delete 0 end
-	foreach wave [$display GetMember waves] {
-		if {[lsearch [itcl::find object] $wave] != -1} {
-			foreach roi [$wave FindROIs] {
-				$w.regionmenu.menu add command -label [$roi GetMember name]\
-				-command "ROIDialogUpdateCreate $roi"
-			}
-		}
-	}
+    	$w.regionmenu.menu delete 0 end
+    	$w.nameLabel.menu delete 0 end
 
-	puts $spectk(roiobject)
+    	foreach wave [$display GetMember waves] {
+        	if {[lsearch [itcl::find object] $wave] != -1} {
+            		foreach roi [$wave FindROIs] {
+                		set name [$roi GetMember name]
+                		$w.regionmenu.menu add command -label $name \
+                    			-command "ROIDialogUpdateCreate $roi"
+                		$w.nameLabel.menu add command -label $name \
+                    			-command "set ::spectk(roiname2) {$name}"
+            		}
+        	}
+    	}
 
-	set spectk(useEllipse) 0
+
+    	set spectk(useEllipse) 0
     	checkbutton $w.ellipseCheck -text "Generate Ellipse" -variable spectk(ellipse)
 
     	button $w.confirmButton -text "Confirm" -command {
-        	global spectk
         	autoGate1 $spectk(roiname2) $spectk(roipercent) $spectk(ellipse) $spectk(roiname)
-		destroy .autoGate
+        	destroy .autoGate
     	}
 
     	grid $w.nameLabel -row 0 -column 0 -sticky w -padx 5 -pady 5
@@ -158,11 +162,9 @@ proc autoGate {} {
     	grid $w.percentEntry -row 1 -column 1 -padx 5 -pady 5
     	grid $w.regionmenu -row 2 -column 0 -padx 5 -pady 5
     	grid $w.region -row 2 -column 1 -padx 5 -pady 5
-	grid $w.ellipseCheck -row 3 -columnspan 2 -pady 5
+    	grid $w.ellipseCheck -row 3 -columnspan 2 -pady 5
     	grid $w.confirmButton -row 4 -columnspan 2 -pady 10
 }
-
-
 
 proc ROIDialogGate {} {
 	global spectk

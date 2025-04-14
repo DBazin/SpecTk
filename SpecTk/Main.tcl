@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.7.11"
+	set spectk(version) "1.8.0"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -167,7 +167,7 @@ proc SetupFonts {} {
 	set spectk(graphsSize) -9
 	set spectk(graphlabelsFamily) helvetica
 	set spectk(graphlabelsSize) -9
-	set spectk(roiresultsFamily) helvetica
+	set spectk(roiresultsFamily) courier 
 	set spectk(roiresultsSize) -9
 	set fonts [font names]
 	if {[lsearch $fonts general] == -1} {font create general -family helvetica -size -12 -weight normal}
@@ -182,7 +182,7 @@ proc SetupFonts {} {
 	if {[lsearch $fonts graphs3] == -1} {font create graphs3 -family helvetica -size -12 -weight normal}
 	if {[lsearch $fonts graphs4] == -1} {font create graphs4 -family helvetica -size -14 -weight normal}
 	if {[lsearch $fonts graphlabels] == -1} {font create graphlabels -family helvetica -size -9 -weight normal}
-	if {[lsearch $fonts roiresults] == -1} {font create roiresults -family helvetica -size -9 -weight normal}
+	if {[lsearch $fonts roiresults] == -1} {font create roiresults -family courier -size -9 -weight bold}
 }	
 
 proc SetupMenuBar {} {
@@ -662,6 +662,9 @@ proc CreateFontDialog {} {
 	button $w.msize5 -text - -command "DecrementFont graphlabels" -font "helvetica -12"
 	grid $w.label5 $w.lfamily5 $w.family5 $w.lsize5 $w.psize5 $w.size5 $w.msize5 -sticky news
 
+	puts $spectk(roiresultsFamily)
+	puts $spectk(roiresultsSize)
+
 	label $w.label6 -text "Graph Results:" -anchor w -font "helvetica -12 bold"
 	label $w.lfamily6 -text Family -anchor w -font "helvetica -12"
 	menubutton $w.family6 -textvariable spectk(roiresultsFamily) -menu $w.family6.choice -anchor w -font "helvetica -12"
@@ -710,6 +713,7 @@ proc SetFont {category} {
 			font configure graphlabels -family $spectk(graphlabelsFamily) -size $spectk(graphlabelsSize)
 		}
 		roiresults {
+			puts $spectk(roiresultsFamily)
 			font configure roiresults -family $spectk(roiresultsFamily) -size $spectk(roiresultsSize)
 		}
 	}
@@ -1763,25 +1767,29 @@ proc autoGate1 {name percent check roi} {
 	set page [lindex [split $frame .] end]
 	set selected [$page GetMember selected]
 
-	set roi2 $spectk(roiobject)
+	if {$roi ne ""} {
+		set roi2 $spectk(roiobject)
+		puts $roi2
+	}
 
 	foreach thing $selected {
 		set id "${page}${thing}"
 		set id2 "::${page}${thing}"
 		set objectname [$id getWave]
-		if {[$roi2 GetMember name] == $roi} {
-			puts "this"
+
+		if {$roi ne "" && [$roi2 GetMember name] == $roi} {
 			lassign [$objectname getVarRoi $roi2] x y z low high incr
 		} else {
-			puts "that"
 			lassign [$objectname getVar] x y z low high incr
 		}
-	
-		# lassign [$objectname getVar] x y z low high incr
+
+		if {[llength $x] == 0} {
+			tk_messageBox -type ok -icon error -title "AutoGate Error" -message "Region is empty"
+			return
+		}
 
 		autoGate2 $x $y $z $low $high $incr $percent $name $check
 	}
-
 }
 
 proc autoGate2 {x y z low high incr percent name check} {
