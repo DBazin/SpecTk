@@ -945,21 +945,25 @@ itcl::body Display2D::UpdateROIResults {wave} {
 		}
 	}
 
-	proc format_number {value width total_digits} {
+	proc format_number {value width total_digits {integer 0}} {
 		if {$value eq ""} {
 			set value 0.0
 		}
-		set absval [expr {abs($value)}]
-		if {$absval < 1} {
-			set int_digits 1
+		if {$integer} {
+			set rounded [format "%.0f" $value]
 		} else {
-			set int_digits [string length [format "%.0f" $absval]]
+			set absval [expr {abs($value)}]
+			if {$absval < 1} {
+				set int_digits 1
+			} else {
+				set int_digits [string length [format "%.0f" $absval]]
+			}
+			set decimal_digits [expr {$total_digits - $int_digits}]
+			if {$decimal_digits < 0} {
+				set decimal_digits 0
+			}
+			set rounded [format "%.*f" $decimal_digits $value]
 		}
-		set decimal_digits [expr {$total_digits - $int_digits}]
-		if {$decimal_digits < 0} {
-			set decimal_digits 0
-		}
-		set rounded [format "%.*f" $decimal_digits $value]
 		set total_width [string length $rounded]
 		if {$total_width < $width} {
 			set padding [string repeat " " [expr {$width - $total_width}]]
@@ -988,7 +992,7 @@ itcl::body Display2D::UpdateROIResults {wave} {
 			set r [$wave GetMember calc($roi)]
 		}
 		set sum_raw [lindex $r 0]
-		set formatted [format "%.5g" $sum_raw]
+		set formatted [format "%.0f" $sum_raw]
 		set len [string length $formatted]
 		if {$len > $max_sum_width} {
 			set max_sum_width $len
@@ -997,27 +1001,27 @@ itcl::body Display2D::UpdateROIResults {wave} {
 	incr max_sum_width 1
 
 	if {$advCalc == 1} {
-		set header_fmt "  %-${max_roi_length}s  %-${max_sum_width}s  %-6s  %-7s  %-7s  %-6s  %-6s  %-8s  %-6s  %-6s\n"
-		append str [format $header_fmt "ROI" "Sum" "Ratio" "<X>" "<Y>" "\u03C3_X" "\u03C3_Y" "Covariance" "Slope" "Area"]
-		set row_fmt "  %-${max_roi_length}s  %${max_sum_width}s  %6s  %6s  %6s  %6s  %6s  %8s  %6s  %6s\n"
+		set header_fmt "  %-${max_roi_length}s  %-${max_sum_width}s  %-7s  %-8s  %-8s  %-7s  %-7s  %-7s  %-8s  %-6s\n"
+		append str [format $header_fmt "ROI" "Sum" "Ratio" "<X>" "<Y>" "\u03C3(X)" "\u03C3(Y)" "Cov" "Slope" "Area"]
+		set row_fmt "  %-${max_roi_length}s  %${max_sum_width}s  %6s  %8s  %8s  %7s  %7s  %5s  %8s  %7s\n"
 	} else {
-		set header_fmt "  %-${max_roi_length}s  %-${max_sum_width}s  %-6s  %-7s  %-7s  %-6s  %-6s\n"
-		append str [format $header_fmt "ROI" "Sum" "Ratio" "<X>" "<Y>" "\u03C3_X" "\u03C3_Y"]
-		set row_fmt "  %-${max_roi_length}s  %${max_sum_width}s  %6s  %6s  %6s  %6s  %6s\n"
+		set header_fmt "  %-${max_roi_length}s  %-${max_sum_width}s  %-7s  %-8s  %-8s  %-7s  %-7s\n"
+		append str [format $header_fmt "ROI" "Sum" "Ratio" "<X>" "<Y>" "\u03C3(X)" "\u03C3(Y)"]
+		set row_fmt "  %-${max_roi_length}s  %${max_sum_width}s  %6s  %8s  %8s  %7s  %7s\n"
 	}
 
 	proc append_roi_row {str_var roi_name r row_fmt advCalc sum_width} {
 		upvar 1 $str_var str
-		set sum       [format_number [lindex $r 0] $sum_width 5]
-		set ratio     [format_number [lindex $r 1] 6 5]
-		set x         [format_number [lindex $r 2] 7 5]
-		set y         [format_number [lindex $r 3] 7 5]
-		set sigma_x   [format_number [lindex $r 6] 6 5]
-		set sigma_y   [format_number [lindex $r 7] 6 5]
+		set sum       [format_number [lindex $r 0] $sum_width 0 1]
+		set ratio     [format_number [lindex $r 1] 5 5]
+		set x         [format_number [lindex $r 2] 6 5]
+		set y         [format_number [lindex $r 3] 6 5]
+		set sigma_x   [format_number [lindex $r 6] 5 5]
+		set sigma_y   [format_number [lindex $r 7] 5 5]
 		if {$advCalc == 1} {
-			set covariance [format_number [lindex $r 8] 8 5]
-			set slope      [format_number [lindex $r 10] 6 5]
-			set area       [format_number [lindex $r 11] 6 5]
+			set covariance [format_number [lindex $r 8] 7 5]
+			set slope      [format_number [lindex $r 10] 7 5]
+			set area       [format_number [lindex $r 11] 5 5]
 			append str [format $row_fmt $roi_name $sum $ratio $x $y $sigma_x $sigma_y $covariance $slope $area]
 		} else {
 			append str [format $row_fmt $roi_name $sum $ratio $x $y $sigma_x $sigma_y]

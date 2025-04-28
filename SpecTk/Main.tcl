@@ -44,7 +44,7 @@ source $SpecTkHome/List.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.8.1"
+	set spectk(version) "1.8.2"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -60,6 +60,7 @@ proc SetupSpecTk {} {
 	set spectk(pageUpdate) 0
 	set spectk(preferences) mac
 	set spectk(disablemouse) 0
+	set spectk(clear) 0
 
 	global List
 	set List [PageList create]
@@ -114,7 +115,7 @@ proc SetupSpecTk {} {
 	frame $spectk(buttons) -width 500 -height $spectk(buttonheight) -borderwidth 2 -relief groove
 
 	set spectk(pages) $spectk(toplevel).pages
-	blt::tabnotebook $spectk(pages) -borderwidth 0 -outerpad 0 -font {Helvetica 12}
+	blt::tabnotebook $spectk(pages) -borderwidth 0 -outerpad 0
 	grid $spectk(status) - -sticky news
 	grid $spectk(tools) $spectk(pages) -sticky news
 	grid ^ $spectk(info) -sticky news
@@ -793,6 +794,11 @@ proc UpdateAll {} {
 		$page Update
 	}
 	EnableUpdate
+	
+	if {$spectk(clear) == 1} {
+		set spectk(clear) 0
+		reload
+	}
 }
 
 proc UpdateAll2 {} {
@@ -808,6 +814,11 @@ proc UpdateAll2 {} {
 	if {$spectk(autoUpdate)} {
 		set spectk(autoCancel) [after [expr $spectk(autoPeriod)*1000] AutoUpdateSpectra]
 	}
+
+	if {$spectk(clear) == 1} {
+		set spectk(clear) 0
+		reload
+	}		
 }
 
 
@@ -820,6 +831,11 @@ proc UpdatePage {} {
 	set page [lindex [split $frame .] end]
 	$page Update
 	EnableUpdate
+
+	if {$spectk(clear) == 1} {
+		set spectk(clear) 0
+		reload
+	}
 }
 
 proc UpdatePage2 {} {
@@ -835,6 +851,11 @@ proc UpdatePage2 {} {
 #	EnableUpdate
 	if {$spectk(autoUpdate)} {
 		set spectk(autoCancel) [after [expr $spectk(autoPeriod)*1000] AutoUpdateSpectra]
+	}
+
+	if {$spectk(clear) == 1} {
+		set spectk(clear) 0
+		reload
 	}
 }
 
@@ -852,6 +873,11 @@ proc UpdateSelected {} {
 		if {$index >= 0} {$display Update}
 	}
 	EnableUpdate
+
+	if {$spectk(clear) == 1} {
+		set spectk(clear) 0
+		reload
+	}
 }
 
 proc UpdateSelected2 {} {
@@ -870,6 +896,10 @@ proc UpdateSelected2 {} {
 		set spectk(autoCancel) [after [expr $spectk(autoPeriod)*1000] AutoUpdateSpectra]
 	}
 
+	if {$spectk(clear) == 1} {
+		set spectk(clear) 0
+		reload
+	}
 }
 
 proc AutoUpdateSpectra {} {
@@ -939,6 +969,7 @@ proc ClearPage {} {
 			}
 		}
 	}
+	set spectk(clear) 1
 }
 
 proc ClearSelected {} {
@@ -956,6 +987,7 @@ proc ClearSelected {} {
 			foreach w $waves {$w Clear}
 		}
 	}
+	set spectk(clear) 1
 }
 
 proc SetScale {command} {
