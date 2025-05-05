@@ -1059,7 +1059,7 @@ itcl::body Display1D::UpdateROIResults {wave} {
 	}
 
 	$graph marker create text -name roidisplay -coords "-Inf Inf" -text $str -anchor nw \
-	-background ivory -justify left -font {Courier 10 bold}
+	-background ivory -justify left -font roiresults
 }
 
 itcl::body Display1D::ShowROIResults {} {
