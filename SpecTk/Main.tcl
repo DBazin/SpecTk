@@ -41,10 +41,11 @@ source $SpecTkHome/FitDialog.tcl
 source $SpecTkHome/Print.tcl
 source $SpecTkHome/GraphDialog.tcl
 source $SpecTkHome/List.tcl
+source $SpecTkHome/Fit2D.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.8.3"
+	set spectk(version) "1.8.8"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
@@ -168,9 +169,10 @@ proc SetupFonts {} {
 	set spectk(graphsSize) -9
 	set spectk(graphlabelsFamily) helvetica
 	set spectk(graphlabelsSize) -9
-	set spectk(roiresultsFamily) helvetica
+	set spectk(roiresultsFamily) Courier
 	set spectk(roiresultsSize) -9
 	set fonts [font names]
+
 	if {[lsearch $fonts general] == -1} {font create general -family helvetica -size -12 -weight normal}
 	if {[lsearch $fonts generalbold] == -1} {font create generalbold -family helvetica -size -12 -weight bold}
 	if {[lsearch $fonts smaller] == -1} {font create smaller -family helvetica -size -10 -weight normal}
@@ -183,7 +185,7 @@ proc SetupFonts {} {
 	if {[lsearch $fonts graphs3] == -1} {font create graphs3 -family helvetica -size -12 -weight normal}
 	if {[lsearch $fonts graphs4] == -1} {font create graphs4 -family helvetica -size -14 -weight normal}
 	if {[lsearch $fonts graphlabels] == -1} {font create graphlabels -family helvetica -size -9 -weight normal}
-	if {[lsearch $fonts roiresults] == -1} {font create roiresults -family helvetica -size -9 -weight normal}
+	if {[lsearch $fonts roiresults] == -1} {font create roiresults -family Courier -size -9 -weight bold}
 }		
 
 proc SetupMenuBar {} {
@@ -379,6 +381,11 @@ proc SetupImages {} {
 	image create photo lorentzian -file $SpecTkHome/lorentzian.gif
 	image create photo exponential -file $SpecTkHome/exponential.gif
 	image create photo polynomial -file $SpecTkHome/polynomial.gif
+
+	image create photo 2DGauss -file $SpecTkHome/2DGauss2.gif
+	image create photo 2DPoly -file $SpecTkHome/2DPoly2.gif
+	image create photo 2DEllipse -file $SpecTkHome/ellipse.png
+
 	image create photo select -file $SpecTkHome/select.gif
 	image create photo display -file $SpecTkHome/display.gif
 	image create photo zoom -file $SpecTkHome/zoom.gif
@@ -1095,6 +1102,51 @@ proc LoadConfiguration {config} {
 	set disableList [$List getDisabled]
 	$List getObjects1
 	$List disable+
+
+    	foreach child [winfo children $spectk(markerListFrame)] {
+        	destroy $child
+    	}
+    	set spectk(markerRowId) 0
+
+    	if {[info exists spectk(markerCount)]} {
+        	for {set i 0} {$i < $spectk(markerCount)} {incr i} {
+            		set name    $spectk(marker,$i,name)
+            		set graph   $spectk(marker,$i,graph)
+            		set coords  $spectk(marker,$i,coords)
+            		set color   $spectk(marker,$i,color)
+           		set dashes  $spectk(marker,$i,dashes)
+
+            	if {[winfo exists $graph]} {
+                	catch {$graph marker delete $name}
+                	catch {$graph marker delete ${name}_label}
+                	catch {$graph marker delete ${name}_dot}
+
+                	$graph marker create line -name $name -coords $coords -outline $color -linewidth 2 -dashes $dashes
+
+                	if {[llength $coords] >= 2} {
+                    		set x0 [lindex $coords 0]
+                    		set y0 [lindex $coords 1]
+                    		$graph marker create text -name ${name}_label -text $name -anchor n -rotate 90 \
+                        		-coords "$x0 $y0" -font "graphlabels" -background "" -outline black
+                	}
+            	}
+
+            	set entryFrame [frame $spectk(markerListFrame).row$i]
+            	label $entryFrame.name -text $name -anchor w -width 15
+            	label $entryFrame.graph -text $graph
+            	button $entryFrame.delete -text "Delete" \
+                	-command [list DeleteMarkerFromGraph $graph $name $entryFrame]
+            	pack $entryFrame.name -side left
+            	pack $entryFrame.delete -side right
+            	pack $entryFrame -in $spectk(markerListFrame) -fill x -pady 2 -padx 2
+        	}
+        	set spectk(markerRowId) $spectk(markerCount)
+    	}
+
+    	unset -nocomplain spectk(markerCount)
+    	foreach key [array names spectk "marker,*"] {
+        	unset spectk($key)
+    	}
 }
 
 proc UpdateRecentFileMenu {} {
@@ -1196,6 +1248,26 @@ proc SaveConfiguration {} {
 	foreach r [itcl::find object -isa ROI] {
 		if {![$r GetMember isgate]} {$r Write $f}
 	}
+
+    	set i 0
+    	foreach child [winfo children $spectk(markerListFrame)] {
+        	if {[winfo exists $child.name] && [winfo exists $child.graph]} {
+            		set name  [$child.name cget -text]
+            		set graph [$child.graph cget -text]
+            		set coords [$graph marker cget $name -coords]
+            		set color  [$graph marker cget $name -outline]
+            		set dashes [$graph marker cget $name -dashes]
+
+            		puts $f "set spectk(marker,$i,name) {$name}"
+            		puts $f "set spectk(marker,$i,graph) {$graph}"
+            		puts $f "set spectk(marker,$i,coords) {$coords}"
+            		puts $f "set spectk(marker,$i,color) {$color}"
+            		puts $f "set spectk(marker,$i,dashes) {$dashes}"
+            		incr i
+        	}
+    	}
+   	puts $f "set spectk(markerCount) $i"
+
 	close $f
 	$List disable+
 }
@@ -1834,14 +1906,18 @@ proc autoGate2 {x y z low high incr percent name check} {
     	puts $file [join $z ","]
 
     	close $file
+
+	set python "python3"
     
 	if $check {
-		set command "autoEllipseCalc.py"
+		set script "autoEllipseCalc.py"
 	} else {
-	    	set command "autoGateCalculator.py"
+	    	set script "autoGateCalculator.py"
 	}
+
+	set command [list $python $script]
     
-    	set result [exec $command]
+    	set result [exec {*}$command]
 
     	set xData {}
     	set yData {}
@@ -1918,6 +1994,74 @@ proc generateROI {roiName xData yData} {
     	$spectk(roiwave) CalculateROI $roiObject
 
     	$roiObject ProcessDisplays UpdateDisplay
+}
+
+proc test {} {
+
+}
+
+proc SaveConfiguration {} {
+    global spectk
+    foreach n [array names spectk] {
+        if {[string match *Family* $n]} {lappend forbidden $n}
+        if {[string match *Size* $n]} {lappend forbidden $n}
+        if {[string match *print* $n]} {lappend forbidden $n}
+    }
+    lappend forbidden version drawerEffect resizeWindow smartmenu smartprevious preferences
+    lappend forbidden pageUpdate autoscale
+    set spectk(geometry) [wm geometry .]
+    set f [open $spectk(configName) w]
+    puts $f "# SpecTk configuration written on [clock format [clock seconds]]"
+
+    global List
+    set fr [open $spectk(configName) r]
+    $List enable+
+    $List writeList $f $fr
+
+    foreach n [array names spectk] {
+        if {[lsearch $forbidden $n] == -1} {
+            puts $f "set spectk($n) {$spectk($n)}"
+        }
+    }
+
+    foreach d [itcl::find object -isa Display1D] {
+        if {[llength [$d GetMember waves]] == 0} {itcl::delete object $d}
+    }
+    foreach d [itcl::find object -isa Display2D] {
+        if {[llength [$d GetMember waves]] == 0} {itcl::delete object $d}
+    }
+    foreach p [$List getPages] {$p Write $f}
+    foreach d [itcl::find object -isa Display1D] {$d Write $f}
+    foreach d [itcl::find object -isa Display2D] {$d Write $f}
+    foreach w [itcl::find object -isa Wave1D] {$w Write $f}
+    foreach w [itcl::find object -isa Wave2D] {$w Write $f}
+    foreach r [itcl::find object -isa ROI] {
+        if {![$r GetMember isgate]} {$r Write $f}
+    }
+
+    # Save marker metadata
+    set i 0
+    foreach child [winfo children $spectk(markerListFrame)] {
+        if {[winfo exists $child.name] && [winfo exists $child.graph]} {
+		set name [$child.name cget -text]
+		set graph [$child.graph cget -text]
+
+		set coords [$graph marker cget $name -coords]
+		set color [$graph marker cget $name -outline]
+		set dashes [$graph marker cget $name -dashes]
+
+		puts $f "set spectk(marker,$i,name) {$name}"
+		puts $f "set spectk(marker,$i,graph) {$graph}"
+		puts $f "set spectk(marker,$i,coords) {$coords}"
+		puts $f "set spectk(marker,$i,color) {$color}"
+		puts $f "set spectk(marker,$i,dashes) {$dashes}"
+            	incr i
+        }
+    }
+    puts $f "set spectk(markerCount) $i"
+
+    close $f
+    $List disable+
 }
 
 SetupSpecTk

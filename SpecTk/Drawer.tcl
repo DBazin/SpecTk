@@ -53,6 +53,12 @@ proc SetupDrawer {} {
 	CreateFitDialog
 	set index [$w insert end -text Fit -window $w.fit]
 	$w tab configure $index -command SelectFit
+
+	frame $w.marker
+	CreateMarkerDialog
+	set index [$w insert end -text Marker -window $w.marker]
+	$w tab configure $index -command SelectMarker
+
 #	bind $spectk(drawer) <Control-q> ExitSpecTk
 #	bind $spectk(drawer) <Control-n> NewConfiguration
 #	bind $spectk(drawer) <Control-o> "LoadConfiguration \"\""
@@ -261,4 +267,253 @@ proc SelectFit {} {
 	global spectk
 	$spectk(drawer).title configure -text Fit
 	UpdateFitDialog
+}
+
+proc SelectMarker {} {
+	global spectk
+	$spectk(drawer).title configure -text Marker
+
+	set tab [$spectk(pages) id select]
+	if {$tab eq ""} {return}
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	set current [$page GetMember current]
+	set display "${page}${current}"
+	if {[catch {set graph [$display GetMember graph]}]} {return}
+
+	if {![info exists spectk(markerName)] || [string trim $spectk(markerName)] eq ""} {
+		set spectk(markerName) [GenerateUniqueMarkerName $graph "Line"]
+	}
+}
+
+proc CreateMarkerDialog {} {
+	global spectk
+	set spectk(markerRowId) 0
+	set spectk(markerStyle) "solid"
+	set spectk(markerColor) "blue"
+
+	set w $spectk(drawer).pages.marker
+
+	frame $w.style
+	radiobutton $w.style.solid -text "Solid" -variable spectk(markerStyle) -value "solid"
+	radiobutton $w.style.dashed -text "Dashed" -variable spectk(markerStyle) -value "dashed"
+	pack $w.style.solid $w.style.dashed -side left -padx 4
+	grid $w.style -row 0 -column 0 -sticky w -padx 4 -pady 4
+
+	frame $w.colorframe
+	label $w.colorframe.label -text "Color:"
+	ttk::combobox $w.colorframe.combo -textvariable spectk(markerColor) \
+	-values {"Black" "Blue" "Crimson" "Cyan" "Gold" "Gray" "Green" \
+	         "Magenta" "Orange" "Purple" "Red" "Teal" "Yellow"} \
+	-state readonly
+	$w.colorframe.combo current 0
+	pack $w.colorframe.label -side left
+	pack $w.colorframe.combo -side left -padx 4
+	grid $w.colorframe -row 1 -column 0 -sticky w -padx 4 -pady 4
+
+	frame $w.nameframe
+	label $w.nameframe.label -text "Name:"
+	entry $w.nameframe.entry -textvariable spectk(markerName) -width 20
+	pack $w.nameframe.label -side left
+	pack $w.nameframe.entry -side left -padx 4
+	grid $w.nameframe -row 2 -column 0 -sticky w -padx 4 -pady 4
+
+	button $w.create -text "Create Mark" -command MarkerToolActivate
+	grid $w.create -row 3 -column 0 -sticky w -padx 4 -pady 4
+
+	frame $w.list -borderwidth 1 -relief sunken
+	canvas $w.list.canvas -width 200 -highlightthickness 0 -yscrollincrement 10
+	scrollbar $w.list.scroll -orient vertical -command "$w.list.canvas yview"
+	$w.list.canvas configure -yscrollcommand "$w.list.scroll set"
+
+	set spectk(markerListFrame) $w.list.canvas.inner
+	frame $spectk(markerListFrame)
+	$w.list.canvas create window 0 0 -anchor nw -window $spectk(markerListFrame)
+
+	grid $w.list.canvas -row 0 -column 0 -sticky news
+	grid $w.list.scroll -row 0 -column 1 -sticky ns
+	grid $w.list -row 4 -column 0 -sticky news -padx 4 -pady 4
+
+	bind $spectk(markerListFrame) <Configure> "
+		$w.list.canvas configure -scrollregion \[list 0 0 200 \[winfo reqheight $spectk(markerListFrame)\]]
+	"
+
+	grid rowconfigure $w.list 0 -weight 1
+	grid columnconfigure $w.list 0 -weight 1
+	grid rowconfigure $w 4 -weight 1
+	grid columnconfigure $w 0 -weight 1
+
+	button $w.deleteall -text "Delete All" -command DeleteAllMarkers
+	grid $w.deleteall -row 5 -column 0 -sticky ew -padx 4 -pady 6
+
+	if {![info exists spectk(markerName)] || [string trim $spectk(markerName)] eq ""} {
+		set tab [$spectk(pages) id select]
+		if {$tab ne ""} {
+			set frame [$spectk(pages) tab cget $tab -window]
+			set page [lindex [split $frame .] end]
+			set current [$page GetMember current]
+			set display "${page}${current}"
+			if {![catch {set graph [$display GetMember graph]}]} {
+				set spectk(markerName) [GenerateUniqueMarkerName $graph "Line"]
+			}
+		}
+	}
+}
+
+proc MarkerToolActivate {} {
+	global spectk markerToolPoints markerToolName markerToolDotName
+
+	set tab [$spectk(pages) id select]
+	if {$tab eq ""} {return}
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	set current [$page GetMember current]
+	set display "${page}${current}"
+	if {[catch {set graph [$display GetMember graph]}]} {return}
+	if {![winfo exist $graph]} {return}
+
+	set markerToolPoints {}
+
+	if {![info exists spectk(markerName)] || [string trim $spectk(markerName)] eq ""} {
+		set markerToolName [GenerateUniqueMarkerName $graph "Line"]
+		set spectk(markerName) $markerToolName
+	} else {
+		set desiredName [string trim $spectk(markerName)]
+		if {[$graph marker exists $desiredName] || [$graph marker exists "${desiredName}_label"]} {
+			set markerToolName [GenerateUniqueMarkerName $graph $desiredName]
+			set spectk(markerName) $markerToolName
+		} else {
+			set markerToolName $desiredName
+		}
+	}
+
+	set markerToolDotName ""
+
+	bind $graph <Button-1> [list MarkerToolAddPoint $display %x %y]
+	bind $graph <Double-Button-1> [list MarkerToolFinish $display]
+}
+
+proc MarkerToolAddPoint {display x y} {
+	global markerToolPoints markerToolName markerToolDotName spectk
+
+	if {[catch {set graph [$display GetMember graph]}]} {return}
+
+	set xcoord [$graph axis invtransform x $x]
+	set ycoord [$graph axis invtransform y $y]
+	lappend markerToolPoints $xcoord $ycoord
+
+	set dotRadius 1
+	set color $spectk(markerColor)
+
+	if {[llength $markerToolPoints] == 2} {
+		set markerToolDotName "${markerToolName}_dot"
+		catch { $graph marker delete $markerToolDotName }
+		set coords {}
+		for {set i 0} {$i < 8} {incr i} {
+			set angle [expr {2.0 * $i * acos(-1) / 8}]
+			set dx [expr {$dotRadius * cos($angle)}]
+			set dy [expr {$dotRadius * sin($angle)}]
+			lappend coords [expr {$xcoord + $dx}] [expr {$ycoord + $dy}]
+		}
+		$graph marker create polygon -name $markerToolDotName -coords $coords \
+			-outline $color -fill $color -linewidth 1
+	} elseif {[llength $markerToolPoints] >= 4} {
+		catch { $graph marker delete $markerToolDotName }
+		set dash {}
+		if {$spectk(markerStyle) eq "dashed"} {
+			set dash {4 4}
+		}
+		if {[$graph marker exist $markerToolName]} {
+			$graph marker configure $markerToolName -coords $markerToolPoints -dashes $dash
+		} else {
+			$graph marker create line -name $markerToolName -coords $markerToolPoints \
+				-outline $color -linewidth 2 -dashes $dash
+		}
+	}
+}
+
+proc MarkerToolFinish {display} {
+	global markerToolName markerToolPoints spectk
+
+	if {[catch {set graph [$display GetMember graph]}]} {return}
+
+	bind $graph <Button-1> {}
+	bind $graph <Double-Button-1> {}
+	bind $graph <B1-Motion> {}
+	bind $graph <ButtonRelease-1> {}
+	focus $spectk(toplevel)
+
+	if {[llength $markerToolPoints] >= 2} {
+		set x0 [lindex $markerToolPoints 0]
+		set y0 [lindex $markerToolPoints 1]
+		set labelName "${markerToolName}_label"
+		$graph marker create text -name $labelName -text $markerToolName -anchor n -rotate 90 \
+			-coords "$x0 $y0" -font "graphlabels" -background "" -outline black
+	}
+
+	if {![info exists spectk(markerRowId)]} {
+		set spectk(markerRowId) 0
+	}
+
+	set entryFrame [frame $spectk(markerListFrame).row[incr spectk(markerRowId)]]
+	label $entryFrame.name -text $markerToolName -anchor w -width 15
+	label $entryFrame.graph -text $graph
+	button $entryFrame.delete -text "Delete" -command [list DeleteMarkerFromGraph $graph $markerToolName $entryFrame]
+	pack $entryFrame.name -side left
+	pack $entryFrame.delete -side right
+	pack $entryFrame -in $spectk(markerListFrame) -fill x -pady 2 -padx 2
+
+	set spectk(markerName) [GenerateUniqueMarkerName $graph "Line"]
+
+	set tab [$spectk(pages) id select]
+	if {$tab ne ""} {
+		set pageName [lindex [split [$spectk(pages) tab cget $tab -window] .] end]
+		if {[info commands $pageName] ne ""} {
+			$pageName BindSelect
+		}
+	}
+}
+
+proc DeleteMarkerFromGraph {graph markerName widget} {
+	catch { $graph marker delete $markerName }
+	catch { $graph marker delete ${markerName}_label }
+	catch { $graph marker delete ${markerName}_dot }
+	catch { destroy $widget }
+}
+
+proc GenerateUniqueMarkerName {graph baseName} {
+	set name $baseName
+	set count 2
+	while {[$graph marker exists $name] || [$graph marker exists "${name}_label"]} {
+		set name "$baseName $count"
+		incr count
+	}
+	return $name
+}
+
+proc DeleteAllMarkers {} {
+	global spectk
+
+	set tab [$spectk(pages) id select]
+	if {$tab eq ""} {return}
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	set current [$page GetMember current]
+	set display "${page}${current}"
+	if {[catch {set graph [$display GetMember graph]}]} {return}
+	if {![winfo exist $graph]} {return}
+
+	set children [winfo children $spectk(markerListFrame)]
+	for {set i 0} {$i < [llength $children]} {incr i} {
+		set child [lindex $children $i]
+		if {[winfo exists $child.graph] && [$child.graph cget -text] eq $graph} {
+			if {[winfo exists $child.name]} {
+				set name [$child.name cget -text]
+				catch { $graph marker delete $name }
+				catch { $graph marker delete ${name}_label }
+				catch { $graph marker delete ${name}_dot }
+			}
+			catch { destroy $child }
+		}
+	}
 }

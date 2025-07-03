@@ -34,11 +34,9 @@ proc CreateFitDialog {} {
 	label $w.lfunction -text "Fit:" -font "generalbold" -anchor w
 	menubutton $w.function -text "Choose function" -menu $w.function.menu -font "general"
 	menu $w.function.menu -tearoff 0
-	foreach f {"Gaussian" "Lorentzian" "Exponential" "Polynomial" \
-	 \
-	} {
-		$w.function.menu add command -label $f -font "general" \
-		-command "FitDialogSelectFunction \"$f\""
+	foreach f {"Gaussian" "Lorentzian" "Exponential" "Polynomial" "Gaussian2D" "Polynomial2D" "Ellipse"} {
+    		$w.function.menu add command -label $f -font "general" \
+        	-command "FitDialogSelectFunction \"$f\""
 	}
 	FitDialogSelectFunction "Gaussian"
 	label $w.iterlabel -text "Maximum iterations:" -anchor w -font "smallerbold"
@@ -87,27 +85,46 @@ proc CreateFitDialog {} {
 
 proc UpdateFitDialog {} {
 	global spectk
+
 	set tab [$spectk(pages) id select]
 	if {[string equal $tab ""]} {return}
 	set frame [$spectk(pages) tab cget $tab -window]
 	set page [lindex [split $frame .] end]
 	set current [$page GetMember current]
 	set display [format %s%s $page $current]
-	if {[lsearch [itcl::find object -isa Display1D] $display] == -1} {return}
+	if {[catch {set graph [$display GetMember graph]}]} {return}
+	# if {[lsearch [itcl::find object -isa Display1D] $display] == -1} {return}
 	if {![winfo exist [$display GetMember graph]]} {return}
+
 	set w $spectk(drawer).pages.fit.input
 	set waves [$display GetMember waves]
 	set spectk(fitgraph) [$display GetMember graph]
+
 	$w.wave.menu delete 0 end
 	foreach wave $waves {
-		if {[lsearch [itcl::find object -isa Wave1D] $wave] != -1} {
-			$w.wave.menu add command -label [$wave GetMember name] \
-			-command "FitDialogSelectWave $wave" \
-			-font "general"
-		}
+		$w.wave.menu add command -label [$wave GetMember name] \
+		-command "FitDialogSelectWave $wave" \
+		-font "general"
 	}
-	if {[lsearch [itcl::find object -isa Wave1D] [lindex $waves 0]] != -1} {
+	if {[lindex $waves 0] != -1} {
 		FitDialogSelectWave [lindex $waves 0]
+	}
+
+	$w.function.menu delete 0 end
+
+	set firstWave [lindex $waves 0]
+	if {[lsearch [itcl::find object -isa Wave2D] $firstWave] != -1} {
+		foreach f {"2D Gaussian" "2D Polynomial" "Ellipse"} {
+			$w.function.menu add command -label $f -font "general" \
+				-command "FitDialogSelectFunction \"$f\""
+		}
+		FitDialogSelectFunction "2D Gaussian"
+	} else {
+		foreach f {"Gaussian" "Lorentzian" "Exponential" "Polynomial"} {
+			$w.function.menu add command -label $f -font "general" \
+				-command "FitDialogSelectFunction \"$f\""
+		}
+		FitDialogSelectFunction "Gaussian"
 	}
 }
 	
@@ -115,7 +132,17 @@ proc FitDialogSelectWave {wave} {
 	global spectk
 	set spectk(fitwave) $wave
 	set w $spectk(drawer).pages.fit.input
-	$w.wave configure -text [$wave GetMember name]
+
+	set name [$wave GetMember name]
+
+	if {[string length $name] > 20} {
+		set displayName "[string range $name 0 14]..."
+	} else {
+		set displayName $name
+	}
+
+	$w.wave configure -text $displayName
+
 	set rois [$wave FindROIs]
 	$w.roi.menu delete 0 end
 	foreach roi $rois {
@@ -211,6 +238,141 @@ proc FitDialogSelectFunction {f} {
 			grid $w.dm $w.d $w.dp x -sticky news
 			FitDialogPolynomialCoeff
 		}
+		"2D Gaussian" {
+			set spectk(ncoeff) 7
+			label $w.f -image 2DGauss
+
+			foreach i {0 1 2 3 4 5 6} {
+				set spectk(hold$i) 0
+			}
+
+			#label $w.f -text "2D Gaussian: A Â· exp(-((xâ€²)Â² / 2Ïƒâ‚“Â² + (yâ€²)Â² / 2Ïƒáµ§Â²)) + Z" -font "Times 12"
+			label $w.l0 -text "A:" -font "smaller"
+			checkbutton $w.h0 -variable spectk(hold0)
+			entry $w.e0 -font "smaller" -width 9 -textvariable spectk(coeff0) -background white
+
+			label $w.l1 -text "x0:" -font "smaller"
+			checkbutton $w.h1 -variable spectk(hold1)
+			entry $w.e1 -font "smaller" -width 9 -textvariable spectk(coeff1) -background white
+
+			label $w.l2 -text "y0:" -font "smaller"
+			checkbutton $w.h2 -variable spectk(hold2)
+			entry $w.e2 -font "smaller" -width 9 -textvariable spectk(coeff2) -background white
+
+			label $w.l3 -text "Ïƒâ‚“:" -font "smaller"
+			checkbutton $w.h3 -variable spectk(hold3)
+			entry $w.e3 -font "smaller" -width 9 -textvariable spectk(coeff3) -background white
+
+			label $w.l4 -text "Ïƒáµ§:" -font "smaller"
+			checkbutton $w.h4 -variable spectk(hold4)
+			entry $w.e4 -font "smaller" -width 9 -textvariable spectk(coeff4) -background white
+
+			label $w.l5 -text "Î¸:" -font "smaller"
+			checkbutton $w.h5 -variable spectk(hold5)
+			entry $w.e5 -font "smaller" -width 9 -textvariable spectk(coeff5) -background white
+
+			label $w.l6 -text "Z:" -font "smaller"
+			checkbutton $w.h6 -variable spectk(hold6)
+			entry $w.e6 -font "smaller" -width 9 -textvariable spectk(coeff6) -background white
+
+			label $w.l7 -text "Percent:" -font "smaller"
+			entry $w.e7 -font "smaller" -width 9 -textvariable spectk(percent) -background white
+
+			grid $w.f - - - -sticky news
+			grid $w.l0 $w.h0 $w.e0 -sticky news
+			grid $w.l1 $w.h1 $w.e1 -sticky news
+			grid $w.l2 $w.h2 $w.e2 -sticky news
+			grid $w.l3 $w.h3 $w.e3 -sticky news
+			grid $w.l4 $w.h4 $w.e4 -sticky news
+			grid $w.l5 $w.h5 $w.e5 -sticky news
+			grid $w.l6 $w.h6 $w.e6 -sticky news
+			grid $w.l7 x $w.e7 -sticky news
+		}
+		"2D Polynomial" {
+			set spectk(ncoeff) 6
+			label $w.f -image 2DPoly
+			# label $w.f -text "2D Polynomial: aÂ·xÂ² + bÂ·xy + cÂ·yÂ² + dÂ·x + eÂ·y + f" -font "Times 12"
+
+			label $w.l0 -text "A:" -font "smaller"
+			checkbutton $w.h0 -variable spectk(hold0)
+			entry $w.e0 -font "smaller" -width 9 -textvariable spectk(coeff0) -background white
+
+			label $w.l1 -text "B:" -font "smaller"
+			checkbutton $w.h1 -variable spectk(hold1)
+			entry $w.e1 -font "smaller" -width 9 -textvariable spectk(coeff1) -background white
+
+			label $w.l2 -text "C:" -font "smaller"
+			checkbutton $w.h2 -variable spectk(hold2)
+			entry $w.e2 -font "smaller" -width 9 -textvariable spectk(coeff2) -background white
+
+			label $w.l3 -text "D:" -font "smaller"
+			checkbutton $w.h3 -variable spectk(hold3)
+			entry $w.e3 -font "smaller" -width 9 -textvariable spectk(coeff3) -background white
+
+			label $w.l4 -text "E:" -font "smaller"
+			checkbutton $w.h4 -variable spectk(hold4)
+			entry $w.e4 -font "smaller" -width 9 -textvariable spectk(coeff4) -background white
+
+			label $w.l5 -text "F:" -font "smaller"
+			checkbutton $w.h5 -variable spectk(hold5)
+			entry $w.e5 -font "smaller" -width 9 -textvariable spectk(coeff5) -background white
+
+			label $w.l6 -text "Percent:" -font "smaller"
+			entry $w.e6 -font "smaller" -width 9 -textvariable spectk(percent) -background white
+
+			grid $w.f - - - -sticky news
+			grid $w.l0 $w.h0 $w.e0 -sticky news
+			grid $w.l1 $w.h1 $w.e1 -sticky news
+			grid $w.l2 $w.h2 $w.e2 -sticky news
+			grid $w.l3 $w.h3 $w.e3 -sticky news
+			grid $w.l4 $w.h4 $w.e4 -sticky news
+			grid $w.l5 $w.h5 $w.e5 -sticky news
+			grid $w.l6 x $w.e6 -sticky news
+		}
+		"Ellipse" {
+			set spectk(ncoeff) 6
+			label $w.f -image 2DEllipse
+
+			foreach i {0 1 2 3 4 5} {
+				set spectk(hold$i) 0
+			}
+
+			label $w.l0 -text "x0:" -font "smaller"
+			checkbutton $w.h0 -variable spectk(hold0)
+			entry $w.e0 -font "smaller" -width 9 -textvariable spectk(coeff0) -background white
+
+			label $w.l1 -text "y0:" -font "smaller"
+			checkbutton $w.h1 -variable spectk(hold1)
+			entry $w.e1 -font "smaller" -width 9 -textvariable spectk(coeff1) -background white
+
+			label $w.l2 -text "a:" -font "smaller"
+			checkbutton $w.h2 -variable spectk(hold2)
+			entry $w.e2 -font "smaller" -width 9 -textvariable spectk(coeff2) -background white
+
+			label $w.l3 -text "b:" -font "smaller"
+			checkbutton $w.h3 -variable spectk(hold3)
+			entry $w.e3 -font "smaller" -width 9 -textvariable spectk(coeff3) -background white
+
+			label $w.l4 -text "c:" -font "smaller"
+			checkbutton $w.h4 -variable spectk(hold4)
+			entry $w.e4 -font "smaller" -width 9 -textvariable spectk(coeff4) -background white
+
+			label $w.l5 -text "Î¸:" -font "smaller"
+			checkbutton $w.h5 -variable spectk(hold5)
+			entry $w.e5 -font "smaller" -width 9 -textvariable spectk(coeff5) -background white
+
+			label $w.l6 -text "Percent:" -font "smaller"
+			entry $w.e6 -font "smaller" -width 9 -textvariable spectk(percent) -background white
+
+			grid $w.f - - - -sticky news
+			grid $w.l0 $w.h0 $w.e0 -sticky news
+			grid $w.l1 $w.h1 $w.e1 -sticky news
+			grid $w.l2 $w.h2 $w.e2 -sticky news
+			grid $w.l3 $w.h3 $w.e3 -sticky news
+			grid $w.l4 $w.h4 $w.e4 -sticky news
+			grid $w.l5 $w.h5 $w.e5 -sticky news
+			grid $w.l6 x $w.e6 -sticky news
+		}
 	}
 }
 
@@ -251,41 +413,101 @@ proc FitDialogPolynomialCoeff {} {
 proc FitDialogDoFit {} {
 	global spectk
 	set w $spectk(drawer).pages.fit.history
-# First create a name for the Fit object and create it if it doesn't exist
-	set name [format %s_%s [$spectk(fitwave) GetMember name] [$spectk(fitroi) GetMember name]]
-	if {[lsearch [itcl::find object -isa Fit] $name] == -1} {Fit $name}
-# Then initialize the Fit object with input choices
+
+	set rawname [format %s_%s [$spectk(fitwave) GetMember name] [$spectk(fitroi) GetMember name]]
+	set name [string map {":" "_" "-" "_"} $rawname]
+
+	if {[string match "2D Gaussian" $spectk(fitfunction)] || [string match "2D Polynomial" $spectk(fitfunction)] || [string match "Ellipse" $spectk(fitfunction)]} {
+		if {[lsearch [itcl::find object -isa Fit2D] $name] == -1} {
+			Fit2D $name
+		}
+	} else {
+		if {[lsearch [itcl::find object -isa Fit] $name] == -1} {
+			Fit $name
+		}
+	}
+
 	$name SetMember wave $spectk(fitwave)
 	$name SetMember roi $spectk(fitroi)
-	$name SetMember graph $spectk(fitgraph)
-	$name SetMember maxiter $spectk(fitmaxiter)
-	$name SetMember epsilon $spectk(fitepsilon)
-	$name SetMember fitpoints $spectk(fitpoints)
-	$name SetMember quiet $spectk(fitquiet)
-# Initialize function
-	switch -- $spectk(fitfunction) {
-		"Gaussian" {$name SetFunction gaussian}
-		"Lorentzian" {$name SetFunction lorentzian}
-		"Exponential" {$name SetFunction exponential}
-		"Polynomial" {$name SetFunction polynomial}
-	}
-# Initialize Fit object vectors with data
-	$name Initialize
-	if {$spectk(fitguess)} {
-# Guess initial values for coefficients
-		$name Guess
-		for {set i 0} {$i < $spectk(ncoeff)} {incr i} {set spectk(coeff$i) [$name.coeff index $i]}
+
+	if {[string match "2D Gaussian" $spectk(fitfunction)] || [string match "2D Polynomial" $spectk(fitfunction)] || [string match "Ellipse" $spectk(fitfunction)]} {
+		$name Initialize
+		$name SetMember message "$spectk(fitfunction) initialization complete"
+		
+		set result [exec python3 Fit2D.py 2>@1]
+		set result2 [split [string trim $result]]
+
+		set clean_result {}
+		foreach item $result2 {
+			if {[string is double -strict $item]} {
+				lappend clean_result $item
+			}
+		}
+
+		set ncoeff [expr {[llength $clean_result] - 1}]
+		for {set i 0} {$i < $ncoeff} {incr i} {
+    			set spectk(coeff$i) [lindex $clean_result $i]
+		}
+		$name SetMember chisq [lindex $clean_result end]
+		$name Display
+
+		set xl {}
+		set yl {}
+		set fin [open "contour.txt" r]
+		while {[gets $fin line] >= 0} {
+			foreach {x y} $line {}
+			lappend xl $x
+			lappend yl $y
+		}
+		close $fin
+
+		set n [llength $xl]
+		set areaTemp 0.0
+		for {set i 0} {$i < $n} {incr i} {
+			set j [expr {($i+1)%$n}]
+			set xi [lindex $xl $i]
+			set yi [lindex $yl $i]
+			set xj [lindex $xl $j]
+			set yj [lindex $yl $j]
+			set areaTemp [expr {$areaTemp + ($xi * $yj - $xj * $yi)}]
+		}
+		set area [expr {abs($areaTemp) * 0.5}]
+		set spectk(area) $area
 	} else {
-# Set Initial values from entries
-		for {set i 0} {$i < $spectk(ncoeff)} {incr i} {lappend coefflist $spectk(coeff$i)}
-		$name.coeff set $coefflist
+		$name SetMember graph $spectk(fitgraph)
+		$name SetMember maxiter $spectk(fitmaxiter)
+		$name SetMember epsilon $spectk(fitepsilon)
+		$name SetMember fitpoints $spectk(fitpoints)
+		$name SetMember quiet $spectk(fitquiet)
+
+		switch -- $spectk(fitfunction) {
+			"Gaussian"      { $name SetFunction gaussian }
+			"Lorentzian"    { $name SetFunction lorentzian }
+			"Exponential"   { $name SetFunction exponential }
+			"Polynomial"    { $name SetFunction polynomial }
+		}
+
+		$name Initialize
+
+		if {$spectk(fitguess)} {
+			$name Guess
+			for {set i 0} {$i < $spectk(ncoeff)} {incr i} {
+				set spectk(coeff$i) [$name.coeff index $i]
+			}
+		} else {
+			set coefflist {}
+			for {set i 0} {$i < $spectk(ncoeff)} {incr i} {
+				lappend coefflist $spectk(coeff$i)
+			}
+			$name.coeff set $coefflist
+		}
+
+		$w.text insert end "$spectk(fitfunction) fit on [$spectk(fitwave) GetMember name] inside [$spectk(fitroi) GetMember name]\n"
+
+		$name Do
+		$name Display
 	}
-	$w.text insert end "$spectk(fitfunction) fit on [$spectk(fitwave) GetMember name] inside [$spectk(fitroi) GetMember name]\n"
-# Do Fit!
-	$name Do
-# Display Fit curve on graph
-	$name Display
-# Print results in history
+
 	FitDialogPrintResults $name
 }
 
@@ -295,45 +517,83 @@ proc FitDialogPrintResults {fit} {
 	set message [$fit GetMember message]
 	$w.text insert end "$message\n"
 	if {[string match *failed* $message]} {return}
-	set chisq [$fit GetMember chisq]
-	set freedom [expr [$fit.x length] + [$fit.coeff length] - 1]
-	set chisq [expr $chisq / $freedom]
-	$w.text insert end "Normalized Chi2 = " "black" "[format %.5g $chisq]\n" "red"
-	set area [format %.5g [$fit GetMember area]]
-	set vunit [[$fit GetMember wave] GetMember vunit]
-	for {set i 0} {$i < [$fit.coeff length]} {incr i} {
-		set r($i) [format %.5g [$fit.coeff range $i $i]]
-		set e($i) [format %.5g [$fit.error range $i $i]]
-		set spectk(coeff$i) $r($i)
+
+	if {[string match "2D*" $spectk(fitfunction)] || [string match "Ellipse*" $spectk(fitfunction)]} {
+		set chisq [$fit GetMember chisq]
+		$w.text insert end "Normalized Chi2 = " "black" "[format %.5g $chisq]\n" "red"
+
+		set ncoeff $spectk(ncoeff)
+		for {set i 0} {$i < $ncoeff} {incr i} {
+			set r($i) [format %.5g $spectk(coeff$i)]
+			set e($i) 0.0
+		}
+	} else {
+		set chisq [$fit GetMember chisq]
+		set freedom [expr [$fit.x length] + [$fit.coeff length] - 1]
+		set chisq [expr $chisq / $freedom]
+		$w.text insert end "Normalized Chi2 = " "black" "[format %.5g $chisq]\n" "red"
+
+		for {set i 0} {$i < [$fit.coeff length]} {incr i} {
+			set r($i) [format %.5g [$fit.coeff range $i $i]]
+			set e($i) [format %.5g [$fit.error range $i $i]]
+			set spectk(coeff$i) $r($i)
+		}
 	}
 	switch -- $spectk(fitfunction) {
 		"Gaussian" {
-			$w.text insert end "y0	= " "black" "$r(0)" "blue" " ± $e(0)\n" "green"
-			$w.text insert end "a	= " "black" "$r(1)" "blue" " ± $e(1)\n" "green"
-			$w.text insert end "A	= " "black" "$r(2)" "blue" " ± $e(2)\n" "green"
-			$w.text insert end "x0	= " "black" "$r(3)" "blue" " ± $e(3)\n" "green"
-			$w.text insert end "sig	= " "black" "$r(4)" "blue" " ± $e(4)\n" "green"
-			$w.text insert end "area	= " "black" "$area" "blue" " $vunit" "black"
+			$w.text insert end "y0	= " "black" "$r(0)" "blue" "   $e(0)\n" "green"
+			$w.text insert end "a	= " "black" "$r(1)" "blue" "   $e(1)\n" "green"
+			$w.text insert end "A	= " "black" "$r(2)" "blue" "   $e(2)\n" "green"
+			$w.text insert end "x0	= " "black" "$r(3)" "blue" "   $e(3)\n" "green"
+			$w.text insert end "sig	= " "black" "$r(4)" "blue" "   $e(4)\n" "green"
+			$w.text insert end "area	= " "black" "[format %.5g [$fit GetMember area]]" "blue" " [[$fit GetMember wave] GetMember vunit]" "black"
 		}
 		"Lorentzian" {
-			$w.text insert end "y0	= " "black" "$r(0)" "blue" " ± $e(0)\n" "green"
-			$w.text insert end "a	= " "black" "$r(1)" "blue" " ± $e(1)\n" "green"
-			$w.text insert end "A	= " "black" "$r(2)" "blue" " ± $e(2)\n" "green"
-			$w.text insert end "x0	= " "black" "$r(3)" "blue" " ± $e(3)\n" "green"
-			$w.text insert end "B	= " "black" "$r(4)" "blue" " ± $e(4)\n" "green"
-			$w.text insert end "area	= " "black" "$area" "blue" " $vunit" "black"
+			$w.text insert end "y0	= " "black" "$r(0)" "blue" "   $e(0)\n" "green"
+			$w.text insert end "a	= " "black" "$r(1)" "blue" "   $e(1)\n" "green"
+			$w.text insert end "A	= " "black" "$r(2)" "blue" "   $e(2)\n" "green"
+			$w.text insert end "x0	= " "black" "$r(3)" "blue" "   $e(3)\n" "green"
+			$w.text insert end "B	= " "black" "$r(4)" "blue" "   $e(4)\n" "green"
+			$w.text insert end "area	= " "black" "[format %.5g [$fit GetMember area]]" "blue" " [[$fit GetMember wave] GetMember vunit]" "black"
 		}
 		"Exponential" {
-			$w.text insert end "y0	= " "black" "$r(0)" "blue" " ± $e(0)\n" "green"
-			$w.text insert end "a	= " "black" "$r(1)" "blue" " ± $e(1)\n" "green"
-			$w.text insert end "A	= " "black" "$r(2)" "blue" " ± $e(2)\n" "green"
-			$w.text insert end "s	= " "black" "$r(3)" "blue" " ± $e(3)\n" "green"
-			$w.text insert end "area	= " "black" "$area" "blue" " $vunit" "black"
+			$w.text insert end "y0	= " "black" "$r(0)" "blue" "   $e(0)\n" "green"
+			$w.text insert end "a	= " "black" "$r(1)" "blue" "   $e(1)\n" "green"
+			$w.text insert end "A	= " "black" "$r(2)" "blue" "   $e(2)\n" "green"
+			$w.text insert end "s	= " "black" "$r(3)" "blue" "   $e(3)\n" "green"
+			$w.text insert end "area	= " "black" "[format %.5g [$fit GetMember area]]" "blue" " [[$fit GetMember wave] GetMember vunit]" "black"
 		}
 		"Polynomial" {
 			for {set i 0} {$i < $spectk(ncoeff)} {incr i} {
-				$w.text insert end "a$i	= " "black" "$r($i)" "blue" " ± $e($i)\n" "green"
+				$w.text insert end "a$i	= " "black" "$r($i)" "blue" "   $e($i)\n" "green"
 			}
+		}
+		"2D Gaussian" {
+			$w.text insert end "Area	= " "black" "[format %.5g $spectk(area)]\n" "blue"
+			$w.text insert end "A	= " "black" "$r(0)\n"
+			$w.text insert end "x0	= " "black" "$r(1)\n"
+			$w.text insert end "y0	= " "black" "$r(2)\n"
+			$w.text insert end "sigx	= " "black" "$r(3)\n"
+			$w.text insert end "sigy	= " "black" "$r(4)\n"
+			$w.text insert end "theta	= " "black" "$r(5)\n"
+			$w.text insert end "Z	= " "black" "$r(6)\n"
+		}
+		"2D Polynomial" {
+			$w.text insert end "Area	= " "black" "[format %.5g $spectk(area)]\n" "blue"
+			set labels {a b c d e f}
+			for {set i 0} {$i < [llength $labels]} {incr i} {
+				set label [lindex $labels $i]
+				$w.text insert end "$label	= " "black" "$r($i)\n"
+			}
+		}
+		"Ellipse" {
+			$w.text insert end "Area	= " "black" "[format %.5g $spectk(area)]\n" "blue"
+			$w.text insert end "x0	= " "black" "$r(0)\n"
+			$w.text insert end "y0	= " "black" "$r(1)\n"
+			$w.text insert end "a	= " "black" "$r(2)\n"
+			$w.text insert end "b	= " "black" "$r(3)\n"
+			$w.text insert end "c	= " "black" "$r(4)\n"
+			$w.text insert end "Î¸	= " "black" "$r(5)\n"
 		}
 	}
 	$w.text insert end "\n"
@@ -349,7 +609,22 @@ proc FitDialogRemoveFit {} {
 	global spectk
 	set name [format %s_%s [$spectk(fitwave) GetMember name] [$spectk(fitroi) GetMember name]]
 	if {[lsearch [itcl::find object -isa Fit] $name] != -1} {itcl::delete object $name}
+
+	if {[info exists spectk(fitgraph)]} {
+		set graph $spectk(fitgraph)
+		if {[winfo exists $graph] && [$graph marker exist $spectk(fitname22)]} {
+			$graph marker delete $spectk(fitname22)
+		}
+	}
+
+	foreach class {Fit Fit2D} {
+		if {[lsearch [itcl::find object -isa $class] $name] != -1} {
+			itcl::delete object $name
+			break
+		}
+	}
 }
+
 
 proc FitDialogPostScript {} {
 	global spectk

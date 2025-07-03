@@ -70,7 +70,7 @@ itcl::body Wave2D::Clear {} {
 	set unit unknown
 	set vunit unknown
 	set parameter ""
-	set spectrum ""
+#	set spectrum ""
 	set type ""
 	set datatype ""
 	set gate True
@@ -337,13 +337,17 @@ itcl::body Wave2D::CalculateAll {} {
 	set sz [blt::vector expr sum($this.z)]
 	set calc(All) [format %.7g $sz]
 	if {$sz == 0} {
-		lappend calc(All) 0 0 0 0 0
+		lappend calc(All) 0 0 0 0 0 0 0 0 0 0 0
 	} else {
 		lappend calc(All) 100
 		lappend calc(All) [set xm [format %.5g [expr [blt::vector expr sum($this.z*($this.x*$xinc+$xlow))] / $sz]]]
 		lappend calc(All) [set ym [format %.5g [expr [blt::vector expr sum($this.z*($this.y*$yinc+$ylow))] / $sz]]]
-		lappend calc(All) [format %.5g [expr 2.35482*sqrt([blt::vector expr sum($this.z*($this.x*$xinc+$xlow-$xm)^2)] / $sz)]]
-		lappend calc(All) [format %.5g [expr 2.35482*sqrt([blt::vector expr sum($this.z*($this.y*$yinc+$ylow-$ym)^2)] / $sz)]]
+
+		lappend calc(All) [format %.5g [expr sqrt([blt::vector expr sum($this.z*($this.x*$xinc+$xlow-$xm)^2)] / $sz)]]
+		lappend calc(All) [format %.5g [expr sqrt([blt::vector expr sum($this.z*($this.y*$yinc+$ylow-$ym)^2)] / $sz)]]
+
+		lappend calc(All) [format %.5g [expr sqrt([blt::vector expr sum($this.z*($this.x*$xinc+$xlow-$xm)^2)] / $sz)]]
+		lappend calc(All) [format %.5g [expr sqrt([blt::vector expr sum($this.z*($this.y*$yinc+$ylow-$ym)^2)] / $sz)]]
 	}
 }
 
@@ -398,7 +402,11 @@ itcl::body Wave2D::CalculateROI {roi} {
     			set cov [expr [blt::vector expr {sum(z * ((x*$xinc+$xlow)-$xm) * ((y*$yinc+$ylow)-$ym))}] / double($sz)]
 			set thetaRad [expr {.5 * atan2(2*$cov, $xStd*$xStd - $yStd*$yStd)}]
 			set thetaDeg [expr {$thetaRad * 180.0 / acos(-1)}]
-			set slope [expr {$cov/($xStd*$xStd)}]
+			if {$xStd != 0} {
+    				set slope [expr {$cov/($xStd*$xStd)}]
+			} else {
+    				set slope "Inf"
+			}
 		}
 
 		lappend calc($roi) [format %.5g [expr (100.0*$sz)/$total]]

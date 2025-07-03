@@ -862,7 +862,6 @@ itcl::body Display2D::UpdateROIs {} {
 itcl::body Display2D::Update {} {
 	if {![winfo exist $graph]} {return}
 	if {[lsearch [itcl::find object -isa Wave2D] $waves] == -1} {
-		puts "returning"
 		return
 	}
 	$waves Update 1
@@ -949,21 +948,27 @@ itcl::body Display2D::UpdateROIResults {wave} {
 		if {$value eq ""} {
 			set value 0.0
 		}
+
 		if {$integer} {
 			set rounded [format "%.0f" $value]
 		} else {
 			set absval [expr {abs($value)}]
-			if {$absval < 1} {
-				set int_digits 1
+			if {$absval != 0 && ($absval >= 1e5 || $absval < 1e-4)} {
+				set rounded [format "%.2e" $value]
 			} else {
-				set int_digits [string length [format "%.0f" $absval]]
+				if {$absval < 1} {
+					set int_digits 1
+				} else {
+					set int_digits [string length [format "%.0f" $absval]]
+				}
+				set decimal_digits [expr {$total_digits - $int_digits}]
+				if {$decimal_digits < 0} {
+					set decimal_digits 0
+				}
+				set rounded [format "%.*f" $decimal_digits $value]
 			}
-			set decimal_digits [expr {$total_digits - $int_digits}]
-			if {$decimal_digits < 0} {
-				set decimal_digits 0
-			}
-			set rounded [format "%.*f" $decimal_digits $value]
 		}
+
 		set total_width [string length $rounded]
 		if {$total_width < $width} {
 			set padding [string repeat " " [expr {$width - $total_width}]]
@@ -1001,9 +1006,9 @@ itcl::body Display2D::UpdateROIResults {wave} {
 	incr max_sum_width 1
 
 	if {$advCalc == 1} {
-		set header_fmt "  %-${max_roi_length}s  %-${max_sum_width}s  %-7s  %-8s  %-8s  %-7s  %-7s  %-7s  %-8s  %-6s\n"
+		set header_fmt "  %-${max_roi_length}s  %-${max_sum_width}s  %-7s  %-8s  %-8s  %-7s  %-7s  %-9s  %-8s  %-6s\n"
 		append str [format $header_fmt "ROI" "Sum" "Ratio" "<X>" "<Y>" "\u03C3(X)" "\u03C3(Y)" "Cov" "Slope" "Area"]
-		set row_fmt "  %-${max_roi_length}s  %${max_sum_width}s  %6s  %8s  %8s  %7s  %7s  %5s  %8s  %7s\n"
+		set row_fmt "  %-${max_roi_length}s  %${max_sum_width}s  %6s  %8s  %8s  %7s  %7s  %9s  %8s  %7s\n"
 	} else {
 		set header_fmt "  %-${max_roi_length}s  %-${max_sum_width}s  %-7s  %-8s  %-8s  %-7s  %-7s\n"
 		append str [format $header_fmt "ROI" "Sum" "Ratio" "<X>" "<Y>" "\u03C3(X)" "\u03C3(Y)"]
@@ -1013,15 +1018,15 @@ itcl::body Display2D::UpdateROIResults {wave} {
 	proc append_roi_row {str_var roi_name r row_fmt advCalc sum_width} {
 		upvar 1 $str_var str
 		set sum       [format_number [lindex $r 0] $sum_width 0 1]
-		set ratio     [format_number [lindex $r 1] 5 5]
-		set x         [format_number [lindex $r 2] 6 5]
-		set y         [format_number [lindex $r 3] 6 5]
-		set sigma_x   [format_number [lindex $r 6] 5 5]
-		set sigma_y   [format_number [lindex $r 7] 5 5]
+		set ratio     [format_number [lindex $r 1] 6 5]
+		set x         [format_number [lindex $r 2] 7 5]
+		set y         [format_number [lindex $r 3] 7 5]
+		set sigma_x   [format_number [lindex $r 6] 6 5]
+		set sigma_y   [format_number [lindex $r 7] 6 5]
 		if {$advCalc == 1} {
-			set covariance [format_number [lindex $r 8] 7 5]
-			set slope      [format_number [lindex $r 10] 7 5]
-			set area       [format_number [lindex $r 11] 5 5]
+			set covariance [format_number [lindex $r 8] 9 5]
+			set slope      [format_number [lindex $r 10] 8 5]
+			set area       [format_number [lindex $r 11] 7 7]
 			append str [format $row_fmt $roi_name $sum $ratio $x $y $sigma_x $sigma_y $covariance $slope $area]
 		} else {
 			append str [format $row_fmt $roi_name $sum $ratio $x $y $sigma_x $sigma_y]
@@ -1038,7 +1043,6 @@ itcl::body Display2D::UpdateROIResults {wave} {
 		append_roi_row str $roi_name $r $row_fmt $advCalc $max_sum_width
 	}
 
-	font configure roiresults -family Courier -weight bold
 	$graph marker create text -name roidisplay -coords "-Inf Inf" -text $str -anchor nw \
 	-background ivory -justify left -font roiresults
 }

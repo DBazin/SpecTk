@@ -75,10 +75,13 @@ proc CreateAssignDialog {} {
 
 # Button frame
 	set w $spectk(drawer).pages.assign.buttons
-	button $w.display -text Display -width 8 -command DoAssignButton -takefocus 0 \
+	button $w.display -text Display -width 6 -command DoAssignButton -takefocus 0 \
 	-activebackground lightgreen -underline 0
-	button $w.superpose -text Superpose -width 8 -command SuperposeSelected -takefocus 0 -activebackground lightgreen
-	grid $w.display $w.superpose -sticky news
+
+	button $w.superpose -text Superimpose -width 8 -command SuperposeSelected -takefocus 0 -activebackground lightgreen
+	button $w.undoSuperpose -text "Undo" -width 4 -command UndoSuperpose -takefocus 0 -activebackground lightgreen
+
+	grid $w.display $w.superpose $w.undoSuperpose -sticky news
 	
 # Bindings
 #	bind $spectk(drawer).pages.assign <Enter> UpdateAssignDialog
@@ -166,8 +169,12 @@ proc reAssignSelectedPlus {} {
 }
 
 proc SuperposeSelected {} {
-	global spectk
-	if {[string equal $spectk(spectrum) ""]} {return}
+	global spectk	
+
+	if {[string equal $spectk(spectrum) ""]} {
+		return
+
+	}
 # Check that we are trying to superpose a 1D spectrum
 	set type [lindex [spectrum -list $spectk(spectrum)] 2]
 	if {[string equal $type b]} {set type 1}
@@ -181,7 +188,11 @@ proc SuperposeSelected {} {
 	set para [lindex [spectrum -list $spectk(spectrum)] 3]
 	set unit [lindex [lindex [parameter -list $para] 3] 2]
 	set page [lindex [split [$spectk(pages) tab cget select -window] .] end]
+
 	set selected [$page GetMember selected]
+	#set treepath "$spectk(drawer).pages.assign.tree.tree"
+	#set selected [$treepath curselection]
+
 	foreach id $selected {
 		set obj [itcl::find objects]
 		if {[lsearch $obj $page$id] == -1} {continue}
@@ -191,6 +202,33 @@ proc SuperposeSelected {} {
 		if {[string equal $match $unit]} {
 			$page AppendSpectrum $id
 		}
+	}
+}
+
+proc UndoSuperpose {} {
+	global spectk
+
+	if {[string equal $spectk(spectrum) ""]} {
+		return
+	}
+
+	set page [lindex [split [$spectk(pages) tab cget select -window] .] end]
+	set selected [$page GetMember selected]
+	set obj [itcl::find objects]
+
+	foreach id $selected {
+		if {[lsearch $obj $page$id] == -1} {continue}
+
+		set waveList [$page$id GetMember waves]
+
+		set keep [lindex $waveList 0]
+		set remove [lrange $waveList 1 end]
+
+		foreach w $remove {
+			$page$id RemoveWave $w
+		}
+
+		$page$id UpdateROIs
 	}
 }
 
