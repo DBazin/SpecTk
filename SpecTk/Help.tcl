@@ -301,17 +301,20 @@ proc DisplayAbout {} {
 	pack .about.dismiss
 	.about.text tag configure big -font "Times -24" -justify center
 	.about.text tag configure normal -font "Helvetica -12" -justify center
+	.about.text tag configure normal2 -font "Helvetica -12 bold" -justify center
 	.about.text tag configure green -foreground darkgreen
 	.about.text insert end "SpecTk\n" "big green"
-	.about.text insert end "version 1.8.8\n" "normal green"
-	.about.text insert end "6/27/2025\n\n" "normal green"
+	.about.text insert end "version 1.8.15\n" "normal green"
+	.about.text insert end "10/12/2025\n\n" "normal green"
 	.about.text insert end "A displayer for SpecTcl\n" "normal"
 	.about.text insert end "\A9 NSCL/MSU 2004\n" "normal"
 	.about.text insert end "Written after hours by D. Bazin\n" "normal"
 	.about.text insert end "on a PowerBook G4 running Mac OS X\n" "normal"
 	.about.text insert end "with the help of two great Tcl/Tk packages:\n" "normal"
 	.about.text insert end "BLT 2.4z and Itcl 3.2\n" "normal"
-	.about.text insert end "Inspired by Xamine, Igor Pro and Mac OS X\n\n" "normal"
+	.about.text insert end "Inspired by Xamine, Igor Pro and Mac OS X\n" "normal"
+	.about.text insert end "Currently maintained by D. Kaloyanov\n\n" "normal2"
+
 	.about.text insert end "Please send comments and suggestions to:\n" "normal"
 	.about.text insert end "bazin@frib.msu.edu" "normal"
 	.about.text insert end "  or\n" "normal"

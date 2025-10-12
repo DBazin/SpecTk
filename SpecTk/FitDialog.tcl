@@ -34,7 +34,7 @@ proc CreateFitDialog {} {
 	label $w.lfunction -text "Fit:" -font "generalbold" -anchor w
 	menubutton $w.function -text "Choose function" -menu $w.function.menu -font "general"
 	menu $w.function.menu -tearoff 0
-	foreach f {"Gaussian" "Lorentzian" "Exponential" "Polynomial" "Gaussian2D" "Polynomial2D" "Ellipse"} {
+	foreach f {"Gaussian" "Lorentzian" "Exponential" "Polynomial" "Gaussian2D" "Polynomial2D" "Ellipse" "EllipseMoment"} {
     		$w.function.menu add command -label $f -font "general" \
         	-command "FitDialogSelectFunction \"$f\""
 	}
@@ -94,7 +94,7 @@ proc UpdateFitDialog {} {
 	set display [format %s%s $page $current]
 	if {[catch {set graph [$display GetMember graph]}]} {return}
 	# if {[lsearch [itcl::find object -isa Display1D] $display] == -1} {return}
-	if {![winfo exist [$display GetMember graph]]} {return}
+	if {![winfo exists [$display GetMember graph]]} {return}
 
 	set w $spectk(drawer).pages.fit.input
 	set waves [$display GetMember waves]
@@ -114,7 +114,7 @@ proc UpdateFitDialog {} {
 
 	set firstWave [lindex $waves 0]
 	if {[lsearch [itcl::find object -isa Wave2D] $firstWave] != -1} {
-		foreach f {"2D Gaussian" "2D Polynomial" "Ellipse"} {
+		foreach f {"2D Gaussian" "2D Polynomial" "Ellipse" "EllipseMoment"} {
 			$w.function.menu add command -label $f -font "general" \
 				-command "FitDialogSelectFunction \"$f\""
 		}
@@ -373,6 +373,45 @@ proc FitDialogSelectFunction {f} {
 			grid $w.l5 $w.h5 $w.e5 -sticky news
 			grid $w.l6 x $w.e6 -sticky news
 		}
+		"EllipseMoment" {
+    			set spectk(ncoeff) 5
+    			label $w.f -image 2DEllipse
+
+        		foreach i {0 1 2 3 4} {
+        			set spectk(hold$i) 0
+    			}
+
+    			label $w.l0 -text "x0:" -font "smaller"
+    			checkbutton $w.h0 -variable spectk(hold0)
+    			entry $w.e0 -font "smaller" -width 9 -textvariable spectk(coeff0) -background white
+
+    			label $w.l1 -text "y0:" -font "smaller"
+    			checkbutton $w.h1 -variable spectk(hold1)
+    			entry $w.e1 -font "smaller" -width 9 -textvariable spectk(coeff1) -background white
+
+    			label $w.l2 -text "a:" -font "smaller"
+    			checkbutton $w.h2 -variable spectk(hold2)
+    			entry $w.e2 -font "smaller" -width 9 -textvariable spectk(coeff2) -background white
+
+    			label $w.l3 -text "b:" -font "smaller"
+    			checkbutton $w.h3 -variable spectk(hold3)
+    			entry $w.e3 -font "smaller" -width 9 -textvariable spectk(coeff3) -background white
+
+    			label $w.l4 -text "θ:" -font "smaller"
+    			checkbutton $w.h4 -variable spectk(hold4)
+    			entry $w.e4 -font "smaller" -width 9 -textvariable spectk(coeff4) -background white
+
+    			label $w.l5 -text "Percent:" -font "smaller"
+    			entry $w.e5 -font "smaller" -width 9 -textvariable spectk(percent) -background white
+
+    			grid $w.f - - - -sticky news
+    			grid $w.l0 $w.h0 $w.e0 -sticky news
+    			grid $w.l1 $w.h1 $w.e1 -sticky news
+    			grid $w.l2 $w.h2 $w.e2 -sticky news
+    			grid $w.l3 $w.h3 $w.e3 -sticky news
+    			grid $w.l4 $w.h4 $w.e4 -sticky news
+    			grid $w.l5 x $w.e5 -sticky news
+		}
 	}
 }
 
@@ -411,110 +450,148 @@ proc FitDialogPolynomialCoeff {} {
 }
 
 proc FitDialogDoFit {} {
-	global spectk
-	set w $spectk(drawer).pages.fit.history
+    global spectk
+    set w $spectk(drawer).pages.fit.history
 
-	set rawname [format %s_%s [$spectk(fitwave) GetMember name] [$spectk(fitroi) GetMember name]]
-	set name [string map {":" "_" "-" "_"} $rawname]
+    set rawname [format %s_%s [$spectk(fitwave) GetMember name] [$spectk(fitroi) GetMember name]]
+    set name [string map {":" "_" "-" "_"} $rawname]
 
-	if {[string match "2D Gaussian" $spectk(fitfunction)] || [string match "2D Polynomial" $spectk(fitfunction)] || [string match "Ellipse" $spectk(fitfunction)]} {
-		if {[lsearch [itcl::find object -isa Fit2D] $name] == -1} {
-			Fit2D $name
-		}
-	} else {
-		if {[lsearch [itcl::find object -isa Fit] $name] == -1} {
-			Fit $name
-		}
-	}
+    if {[string match "2D Gaussian" $spectk(fitfunction)] ||
+        [string match "2D Polynomial" $spectk(fitfunction)] ||
+        [string match "Ellipse" $spectk(fitfunction)] ||
+        [string match "EllipseMoment" $spectk(fitfunction)]} {
 
-	$name SetMember wave $spectk(fitwave)
-	$name SetMember roi $spectk(fitroi)
+        if {[lsearch [itcl::find object -isa Fit2D] $name] == -1} {
+            Fit2D $name
+        }
 
-	if {[string match "2D Gaussian" $spectk(fitfunction)] || [string match "2D Polynomial" $spectk(fitfunction)] || [string match "Ellipse" $spectk(fitfunction)]} {
-		$name Initialize
-		$name SetMember message "$spectk(fitfunction) initialization complete"
-		
-		set result [exec python3 Fit2D.py 2>@1]
-		set result2 [split [string trim $result]]
+    } else {
+        if {[lsearch [itcl::find object -isa Fit] $name] == -1} {
+            Fit $name
+        }
+    }
 
-		set clean_result {}
-		foreach item $result2 {
-			if {[string is double -strict $item]} {
-				lappend clean_result $item
-			}
-		}
+    $name SetMember wave $spectk(fitwave)
+    $name SetMember roi $spectk(fitroi)
 
-		set ncoeff [expr {[llength $clean_result] - 1}]
-		for {set i 0} {$i < $ncoeff} {incr i} {
-    			set spectk(coeff$i) [lindex $clean_result $i]
-		}
-		$name SetMember chisq [lindex $clean_result end]
-		$name Display
+    if {[string match "2D*" $spectk(fitfunction)] || [string match "Ellipse*" $spectk(fitfunction)]} {
+        $name Initialize
+        $name SetMember message "$spectk(fitfunction) initialization complete"
 
-		set xl {}
-		set yl {}
-		set fin [open "contour.txt" r]
-		while {[gets $fin line] >= 0} {
-			foreach {x y} $line {}
-			lappend xl $x
-			lappend yl $y
-		}
-		close $fin
+        # Run the Python script
+        set result [exec python3 Fit2D.py 2>@1]
+        set result2 [split [string trim $result]]
 
-		set n [llength $xl]
-		set areaTemp 0.0
-		for {set i 0} {$i < $n} {incr i} {
-			set j [expr {($i+1)%$n}]
-			set xi [lindex $xl $i]
-			set yi [lindex $yl $i]
-			set xj [lindex $xl $j]
-			set yj [lindex $yl $j]
-			set areaTemp [expr {$areaTemp + ($xi * $yj - $xj * $yi)}]
-		}
-		set area [expr {abs($areaTemp) * 0.5}]
-		set spectk(area) $area
-	} else {
-		$name SetMember graph $spectk(fitgraph)
-		$name SetMember maxiter $spectk(fitmaxiter)
-		$name SetMember epsilon $spectk(fitepsilon)
-		$name SetMember fitpoints $spectk(fitpoints)
-		$name SetMember quiet $spectk(fitquiet)
+        set clean_result {}
+        set spectk(rms_x) ""
+        set spectk(rms_y) ""
+        set spectk(cov_xy) ""
 
-		switch -- $spectk(fitfunction) {
-			"Gaussian"      { $name SetFunction gaussian }
-			"Lorentzian"    { $name SetFunction lorentzian }
-			"Exponential"   { $name SetFunction exponential }
-			"Polynomial"    { $name SetFunction polynomial }
-		}
+        foreach item $result2 {
+            if {[string match "#rms_x" $item]} {
+                set idx [lsearch $result2 $item]
+                set spectk(rms_x) [lindex $result2 [expr {$idx + 1}]]
+                set spectk(rms_y) [lindex $result2 [expr {$idx + 3}]]
+                set spectk(cov_xy) [lindex $result2 [expr {$idx + 5}]]
+                continue
+            }
+            if {[string is double -strict $item]} {
+                lappend clean_result $item
+            }
+        }
 
-		$name Initialize
+        set ncoeff [llength $clean_result]
+        for {set i 0} {$i < $ncoeff} {incr i} {
+            set spectk(coeff$i) [lindex $clean_result $i]
+        }
 
-		if {$spectk(fitguess)} {
-			$name Guess
-			for {set i 0} {$i < $spectk(ncoeff)} {incr i} {
-				set spectk(coeff$i) [$name.coeff index $i]
-			}
-		} else {
-			set coefflist {}
-			for {set i 0} {$i < $spectk(ncoeff)} {incr i} {
-				lappend coefflist $spectk(coeff$i)
-			}
-			$name.coeff set $coefflist
-		}
+        $name SetMember chisq 0.0
+        $name Display
 
-		$w.text insert end "$spectk(fitfunction) fit on [$spectk(fitwave) GetMember name] inside [$spectk(fitroi) GetMember name]\n"
+	set tab [$spectk(pages) id select]
+	if {[string equal $tab ""]} {return}
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	set current [$page GetMember current]
+	set display [format %s%s $page $current]
 
-		$name Do
-		$name Display
-	}
+	$display SetMember fitwave $spectk(fitwave)
+	$display SetMember fitroi $spectk(fitroi)
+	$display SetMember fitname $name
 
-	FitDialogPrintResults $name
+        set xl {}
+        set yl {}
+        set fin [open "contour.txt" r]
+        while {[gets $fin line] >= 0} {
+            foreach {x y} $line {}
+            lappend xl $x
+            lappend yl $y
+        }
+        close $fin
+
+        set n [llength $xl]
+        set areaTemp 0.0
+        for {set i 0} {$i < $n} {incr i} {
+            set j [expr {($i+1)%$n}]
+            set xi [lindex $xl $i]
+            set yi [lindex $yl $i]
+            set xj [lindex $xl $j]
+            set yj [lindex $yl $j]
+            set areaTemp [expr {$areaTemp + ($xi * $yj - $xj * $yi)}]
+        }
+        set spectk(area) [expr {abs($areaTemp) * 0.5}]
+
+    } else {
+        $name SetMember graph $spectk(fitgraph)
+        $name SetMember maxiter $spectk(fitmaxiter)
+        $name SetMember epsilon $spectk(fitepsilon)
+        $name SetMember fitpoints $spectk(fitpoints)
+        $name SetMember quiet $spectk(fitquiet)
+
+        switch -- $spectk(fitfunction) {
+            "Gaussian"    { $name SetFunction gaussian }
+            "Lorentzian"  { $name SetFunction lorentzian }
+            "Exponential" { $name SetFunction exponential }
+            "Polynomial"  { $name SetFunction polynomial }
+        }
+
+        $name Initialize
+
+        if {$spectk(fitguess)} {
+            $name Guess
+            for {set i 0} {$i < $spectk(ncoeff)} {incr i} {
+                set spectk(coeff$i) [$name.coeff index $i]
+            }
+        } else {
+            set coefflist {}
+            for {set i 0} {$i < $spectk(ncoeff)} {incr i} {
+                lappend coefflist $spectk(coeff$i)
+            }
+            $name.coeff set $coefflist
+        }
+
+        $w.text insert end "$spectk(fitfunction) fit on [$spectk(fitwave) GetMember name] inside [$spectk(fitroi) GetMember name]\n"
+
+        $name Do
+        $name Display
+    }
+    $display SetMember fitmarker $spectk(fitname22)
+    FitDialogPrintResults $name
 }
 
 proc FitDialogPrintResults {fit} {
 	global spectk
 	set w $spectk(drawer).pages.fit.history
 	set message [$fit GetMember message]
+
+	set wave [$fit GetMember wave]
+	set roi  [$fit GetMember roi]
+	set wname [$wave GetMember name]
+	set rname [$roi GetMember name]
+
+	$w.text insert end "Fit on Spectrum: $wname\n" "green"
+	$w.text insert end "ROI: $rname\n" "green"
+
 	$w.text insert end "$message\n"
 	if {[string match *failed* $message]} {return}
 
@@ -595,6 +672,17 @@ proc FitDialogPrintResults {fit} {
 			$w.text insert end "c	= " "black" "$r(4)\n"
 			$w.text insert end "θ	= " "black" "$r(5)\n"
 		}
+		"EllipseMoment" {
+			$w.text insert end "Area	= " "black" "[format %.5g $spectk(area)]\n" "blue"
+    			$w.text insert end "x0      = " "black" "$r(0)\n"
+    			$w.text insert end "y0      = " "black" "$r(1)\n"
+    			$w.text insert end "a (RMS Major)      = " "black" "$r(2)\n"
+    			$w.text insert end "b (RMS Minor)      = " "black" "$r(3)\n"
+    			$w.text insert end "θ       = " "black" "$r(4)\n"
+    			if {[info exists spectk(cov_xy)] && $spectk(cov_xy) ne ""} {
+        			$w.text insert end "cov_xy = " "black" "[format %.5g $spectk(cov_xy)]\n" "green"
+    			}
+		}
 	}
 	$w.text insert end "\n"
 	$w.text see end
@@ -607,24 +695,36 @@ proc FitDialogClearHistory {} {
 
 proc FitDialogRemoveFit {} {
 	global spectk
-	set name [format %s_%s [$spectk(fitwave) GetMember name] [$spectk(fitroi) GetMember name]]
-	if {[lsearch [itcl::find object -isa Fit] $name] != -1} {itcl::delete object $name}
 
-	if {[info exists spectk(fitgraph)]} {
-		set graph $spectk(fitgraph)
-		if {[winfo exists $graph] && [$graph marker exist $spectk(fitname22)]} {
-			$graph marker delete $spectk(fitname22)
-		}
+	set rawname [format %s_%s [$spectk(fitwave) GetMember name] [$spectk(fitroi) GetMember name]]
+	set name [string map {":" "_" "-" "_" "!" "_"} $rawname]
+
+	if {[lsearch [itcl::find object -isa Fit] $name] != -1} {
+		itcl::delete object $name
+		return
 	}
 
-	foreach class {Fit Fit2D} {
-		if {[lsearch [itcl::find object -isa $class] $name] != -1} {
-			itcl::delete object $name
-			break
+	set tab [$spectk(pages) id select]
+	if {[string equal $tab ""]} {return}
+	set frame [$spectk(pages) tab cget $tab -window]
+	set page [lindex [split $frame .] end]
+	set current [$page GetMember current]
+	set display [format %s%s $page $current]
+
+	if {[catch {set name [$display GetMember fitname]}]} { return }
+	if {[catch {set marker [$display GetMember fitmarker]}]} { set marker "" }
+
+	if {[lsearch [itcl::find object -isa Fit2D] $name] != -1} {
+		itcl::delete object $name
+	}
+	set graph [$display GetMember graph]
+
+	if {[catch {set graph [$display GetMember graph]}] == 0} {
+		if {$marker ne "" && [winfo exists $graph] && [$graph marker exist $marker]} {
+			$graph marker delete $marker
 		}
 	}
 }
-
 
 proc FitDialogPostScript {} {
 	global spectk

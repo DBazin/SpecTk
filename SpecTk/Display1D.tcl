@@ -656,10 +656,10 @@ itcl::body Display1D::ScrollMotion {xscreen} {
 	global scrollMotion
 	if {$xscreen > [expr [$graph cget -width] / 2]} {
 		$graph configure -cursor sb_right_arrow
-		set scrollMotion 1
+		set scrollMotion -1
 	} else {
 		$graph configure -cursor sb_left_arrow
-		set scrollMotion -1
+		set scrollMotion 1
 	}
 	set x [$graph axis invtransform x $xscreen]
 	set waveinfo [[lindex $waves $index] GetBin $x]

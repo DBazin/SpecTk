@@ -50,6 +50,44 @@ hold_flags = np.array(hold_flags)
 fit_mask = hold_flags == 0
 init_guess = params[fit_mask]
 
+if fit_type == "EllipseMoment":
+    def ellipse_from_moments(x, y, weights=None):
+        if weights is None:
+            weights = np.ones_like(x)
+
+        x0 = np.average(x, weights=weights)
+        y0 = np.average(y, weights=weights)
+
+        x_shift = x - x0
+        y_shift = y - y0
+
+        cov_xx = np.average(x_shift**2, weights=weights)
+        cov_yy = np.average(y_shift**2, weights=weights)
+        cov_xy = np.average(x_shift * y_shift, weights=weights)
+
+        cov_matrix = np.array([[cov_xx, cov_xy],
+                               [cov_xy, cov_yy]])
+
+        eigvals, eigvecs = np.linalg.eigh(cov_matrix)
+        order = np.argsort(eigvals)[::-1]
+        eigvals = eigvals[order]
+        eigvecs = eigvecs[:, order]
+
+        a = np.sqrt(eigvals[0])
+        b = np.sqrt(eigvals[1])
+        theta = np.arctan2(eigvecs[1, 0], eigvecs[0, 0])
+
+        return x0, y0, a, b, theta, cov_xx, cov_yy, cov_xy
+
+    x0, y0, a, b, theta, cov_xx, cov_yy, cov_xy = ellipse_from_moments(x, y, weights=z)
+
+    fit = np.array([x0, y0, a, b, theta])
+
+    # No normChi here
+    print(" ".join([f"{v:.6f}" for v in fit]))
+    print(f"#rms_x {cov_xx:.6f} rms_y {cov_yy:.6f} cov_xy {cov_xy:.6f}")
+    exit(0)
+
 if fit_type == "Gaussian2D":
     fit_func = rotated_gaussian_exp
 elif fit_type == "Polynomial2D":

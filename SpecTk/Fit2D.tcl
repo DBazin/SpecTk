@@ -53,8 +53,8 @@ itcl::body Fit2D::Initialize {} {
 			if {!$spectk(hold0)} { set A [blt::vector expr max($this.z)] } else { set A $spectk(coeff0) }
 			if {!$spectk(hold1)} { set x0 [lindex $result 2] } else { set x0 $spectk(coeff1) }
 			if {!$spectk(hold2)} { set y0 [lindex $result 3] } else { set y0 $spectk(coeff2) }
-			if {!$spectk(hold3)} { set sigx [lindex $result 5] } else { set sigx $spectk(coeff3) }
-			if {!$spectk(hold4)} { set sigy [lindex $result 6] } else { set sigy $spectk(coeff4) }
+			if {!$spectk(hold3)} { set sigx [lindex $result 6] } else { set sigx $spectk(coeff3) }
+			if {!$spectk(hold4)} { set sigy [lindex $result 7] } else { set sigy $spectk(coeff4) }
 			if {!$spectk(hold5)} { set theta 0.0 } else { set theta $spectk(coeff5) }
 			if {!$spectk(hold6)} { set B 0.0 } else { set B $spectk(coeff6) }
 
@@ -139,7 +139,33 @@ itcl::body Fit2D::Initialize {} {
 		puts $file [join [list $spectk(hold0) $spectk(hold1) $spectk(hold2) $spectk(hold3) $spectk(hold4) $spectk(hold5)] ","]
 		flush $file
 		close $file
-	}
+    	} elseif {[string match "EllipseMoment" $fitType]} {
+        	if {$spectk(fitguess)} {
+            		if {!$spectk(hold0)} { set x0 [lindex $result 2] } else { set x0 $spectk(coeff0) }
+            		if {!$spectk(hold1)} { set y0 [lindex $result 3] } else { set y0 $spectk(coeff1) }
+            		set a 0.0
+           		set b 0.0
+            		set theta 0.0
+        	} else {
+            		set x0    $spectk(coeff0)
+            		set y0    $spectk(coeff1)
+            		set a     $spectk(coeff2)
+            		set b     $spectk(coeff3)
+            		set theta $spectk(coeff4)
+        	}
+
+        	set file [open "data.txt" "w"]
+        	puts $file "EllipseMoment"
+        	puts $file "$x0,$y0,$a,$b,$theta"
+        	puts $file [join $low ","]
+        	puts $file [join $increment ","]
+        	puts $file [join $x ","]
+        	puts $file [join $y ","]
+        	puts $file [join $z ","]
+        	puts $file [join [list $spectk(hold0) $spectk(hold1) $spectk(hold2) $spectk(hold3) $spectk(hold4)] ","]
+        	flush $file
+        	close $file
+    	}
 }
 
 itcl::body Fit2D::DoFit {} {

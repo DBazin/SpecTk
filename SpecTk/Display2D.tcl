@@ -27,7 +27,11 @@ itcl::class Display2D {
 	private variable message
 	private variable timer
 	private variable binding
-	
+	private variable fitwave
+	private variable fitroi
+	private variable fitname
+	private variable fitmarker	
+
 	constructor {w} {
 		global SpecTkHome
 		set parent $w
@@ -503,11 +507,11 @@ itcl::body Display2D::BindExpand {} {
 	$graph configure -cursor sb_v_double_arrow
 	bind $graph <Enter> "set spectk(spectruminfo) [[$this GetMember waves] GetMember name]"
 	bind $graph <Leave> "set spectk(spectruminfo) \"\""
-	bind $graph <ButtonPress-1> "$this ExpandMinus %x %y 1"
-	bind $graph <Shift-ButtonPress-1> "$this ExpandMinus %x %y 0"
-	bind $graph <ButtonPress-3> "$this ExpandPlus"
-	bind $graph <Double-ButtonPress-1> "$this ExpandAuto"
-	bind $graph <Motion> "$this SelectMotion %x %y"
+	#bind $graph <ButtonPress-1> "$this ExpandMinus %x %y 1"
+	#bind $graph <Shift-ButtonPress-1> "$this ExpandMinus %x %y 0"
+	#bind $graph <ButtonPress-3> "$this ExpandPlus"
+	#bind $graph <Double-ButtonPress-1> "$this ExpandAuto"
+	#bind $graph <Motion> "$this SelectMotion %x %y"
 	set spectk(spectruminfo) [$waves GetMember name]
 	set spectk(xunit) ""
 	set spectk(xvalue) ""
@@ -642,16 +646,16 @@ itcl::body Display2D::ScrollMotion {xscreen yscreen} {
 	if {$angle < 0.0} {set angle [expr $angle+360.0]}
 	if {$angle > 45.0 && $angle < 135.0} {
 		$graph configure -cursor sb_up_arrow
-		set scrollMotion 2
+		set scrollMotion -2
 	} elseif {$angle > 135.0 && $angle < 225.0} {
 		$graph configure -cursor sb_left_arrow
-		set scrollMotion -1
+		set scrollMotion 1
 	} elseif {$angle > 225.0 && $angle < 315.0} {
 		$graph configure -cursor sb_down_arrow
-		set scrollMotion -2
+		set scrollMotion 2
 	} else {
 		$graph configure -cursor sb_right_arrow
-		set scrollMotion 1
+		set scrollMotion -1
 	}
 	set x [$graph axis invtransform x $xscreen]
 	set y [$graph axis invtransform y $yscreen]

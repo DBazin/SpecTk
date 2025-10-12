@@ -535,7 +535,7 @@ itcl::body ROI::B1Create {graph rtype xw yw} {
 				if {[llength $spectk(limits)] == 6} {
 					$graph marker delete roi
 					$graph marker create polygon -name roi -coords $spectk(limits) -linewidth 1 \
-					-outline red -fill ""
+					-outline blue -fill ""
 					if {[string equal $spectk(roitype) roi]} {$graph marker configure roi -dashes 2.0}
 				} else {
 					$graph marker configure roi -coords $spectk(limits)

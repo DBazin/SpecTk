@@ -301,8 +301,17 @@ itcl::body Wave1D::CalculateROI {roi} {
 	set xl [$roi GetMember xlimits]
 	set binmin [expr int(([lindex $xl 0]-$low)/$increment)]
 	if {$binmin < 0} {set binmin 0}
-	set binmax [expr int(([lindex $xl 1]-$low)/$increment)]
+	set binmax [expr int(([lindex $xl 1]-$low-1e-9)/$increment)]
 	if {$binmax > [expr $bins-1]} {set binmax [expr $bins-1]}
+
+	set lastIdx [expr {[$this.data length] - 1}]
+	if {$lastIdx < 0} {
+		set calc($roi) 0 0 0 0
+		return
+	}
+
+	if {$binmax > $lastIdx} {set binmax $lastIdx}
+
 	blt::vector create x y
 	set xmin [expr $low+$binmin*$increment]
 	set xmax [expr $low+($binmax+0.5)*$increment]

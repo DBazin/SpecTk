@@ -45,7 +45,7 @@ source $SpecTkHome/Fit2D.tcl
 
 proc SetupSpecTk {} {
 	global spectk
-	set spectk(version) "1.8.8"
+	set spectk(version) "1.8.15"
 	set spectk(configName) unknown.spk
 	set spectk(smartmenu) .
 	set spectk(smartprevious) .
